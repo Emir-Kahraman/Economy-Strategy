@@ -19,13 +19,13 @@ public enum BuildingType
 [CreateAssetMenu(fileName = "NewBuilding", menuName ="Building Data")]
 public class BuildingData : ScriptableObject
 {
-    public TileBase tileBase;
+    public TileBase mainTile;
+    public TileBase[] secondaryTiles;
     public TilemapType tilemapType;
     public Vector2Int size = Vector2Int.one;
     public bool canReplaceResources = false;
 
     public Sprite icon;
-    public int woodCost;
-    public int stoneCost;
+    public int cost;
     public BuildingType buildingType;
 }

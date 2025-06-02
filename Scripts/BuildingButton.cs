@@ -23,15 +23,22 @@ public class BuildingButton : MonoBehaviour
         data = buildingData;
         icon.sprite = data.icon;
         titleText.text = data.name;
-        costText.text = $"пїЅпїЅпїЅпїЅпїЅпїЅ: {data.woodCost}\nпїЅпїЅпїЅпїЅпїЅпїЅ: {data.stoneCost}";
+        costText.text = $"Стоимость {buildingData.cost}";
     }
+
     public void SetVisible(bool visible)
     {
         gameObject.SetActive(visible);
     }
+
+    public void UpdateCostColors(bool hasCost)
+    {
+        costText.color = hasCost ? Color.white : Color.red;
+    }
+
     private void OnClick()
     {
-        BuildMenuController.Instance.OnBuildingSelected();
+        BuildMenuController.Instance.StartBuildingMode();
         BuildingSystem.Instance.StartBuilding(data);
     }
     

@@ -1,0 +1,52 @@
+/[Ll]ibrary/
+/[Tt]emp/
+/[Oo]bj/
+/[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+# ================== #
+.vs/
+.vscode/
+*.sln
+*.csproj
+*.userprefs
+*.private.settings
+*.opendb
+*.VC.db
+# ============= #
+bin/
+obj/
+*.exe
+*.dll
+*.pdb
+*.ilk
+*.cache
+*.app
+*.apk
+*.aab
+# ======================== #
+[Pp]ackages/*
+![Pp]ackages/manifest.json
+# ======================== #
+.DS_Store
+Thumbs.db
+desktop.ini
+__pycache__/
+# ======================== #
+*.log
+*.bak
+*.tmp
+*.swp
+*~
+~$*
+# ======================== #
+*.zip
+*.rar
+*.7z
+*.pdf
+*.psd
+*.blend
+*.fbx
+*.max

@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd5db0ae5f17e2045bf92f79c49a6a9b, type: 3}
+  m_Name: Forest
+  m_EditorClassIdentifier: 
+  mainTile: {fileID: 11400000, guid: 2aa0575d097ec474499a1e2bb7e682bd, type: 2}
+  secondaryTiles: []
+  tilemapType: 1
+  size: {x: 1, y: 1}
+  canReplaceResources: 0
+  icon: {fileID: -4832618155596115187, guid: 2d126a23ff4a9e548aa553242669bd5e, type: 3}
+  cost: 10
+  buildingType: 3

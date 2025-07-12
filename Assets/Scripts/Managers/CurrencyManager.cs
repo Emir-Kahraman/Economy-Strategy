@@ -47,4 +47,10 @@ public class CurrencyManager : MonoBehaviour
         }
         return false;
     }
+
+    public void SpendMoney(int amount)
+    {
+        _currentMoney -= amount;
+        EventBusManager.Instance.MoneyChanged(GetCurrentMoney());
+    }
 }

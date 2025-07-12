@@ -139,7 +139,7 @@ public class StorageManager : MonoBehaviour
         totalCapacity += changeCapacity;
         EventBusManager.Instance.StorageCapacityUpdated(totalCapacity);
     }
-    public bool CanDeleteStorageBuilding()
+    public bool CanDeleteStorageBuilding()//
     {
         return true;
     }

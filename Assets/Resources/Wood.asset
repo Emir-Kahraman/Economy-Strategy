@@ -16,3 +16,5 @@ MonoBehaviour:
   Name: Wood
   Icon: {fileID: -2579957754792524931, guid: 845f54fe6402b96478afde7c18b10f7d, type: 3}
   VolumePerUnit: 4
+  ProductionLevel: 1
+  ProductionHard: 0

@@ -14,6 +14,7 @@ public class UIStorageMenuController : MonoBehaviour, IUIWindow
     [SerializeField] private Button closeButton;
     [SerializeField] private GameObject storageElementPrefab;
     [SerializeField] private GameObject storageElementsParent;
+    [SerializeField] private Button menuButton;
 
     private List<ResourceData> allResources;
     private Dictionary<ResourceType, UIStorageElement> storageElements = new();
@@ -45,18 +46,18 @@ public class UIStorageMenuController : MonoBehaviour, IUIWindow
     }
     private void InitializeEvents()
     {
-        EventBusManager.Instance.OnResourceDataUpdated += SetResourceData;
+        EventBusManager.Instance.OnResourceDataUpdated += SetResourceDates;
         EventBusManager.Instance.OnResourceUpdated += UpdateResourcesAmount;
         EventBusManager.Instance.OnStorageCapacityUpdated += UpdateStorageCapacity;
     }
     private void UninitializeEvents()
     {
-        EventBusManager.Instance.OnResourceDataUpdated -= SetResourceData;
+        EventBusManager.Instance.OnResourceDataUpdated -= SetResourceDates;
         EventBusManager.Instance.OnResourceUpdated -= UpdateResourcesAmount;
         EventBusManager.Instance.OnStorageCapacityUpdated -= UpdateStorageCapacity;
     }
 
-    private void SetResourceData(List<ResourceData> resourceDates)
+    private void SetResourceDates(List<ResourceData> resourceDates)
     {
         allResources = resourceDates;
 
@@ -149,9 +150,11 @@ public class UIStorageMenuController : MonoBehaviour, IUIWindow
     public void OpenWindow()
     {
         targetWindow.SetActive(true);
+        menuButton.gameObject.SetActive(false);
     }
     public void CloseWindow()
     {
         targetWindow.SetActive(false);
+        menuButton.gameObject.SetActive(true);
     }
 }

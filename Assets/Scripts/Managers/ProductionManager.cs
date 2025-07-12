@@ -67,13 +67,21 @@ public class ProductionManager : MonoBehaviour
 
     private void Update()
     {        
+        FactoriesProductionUpdate();
+    }
+    private void FactoriesProductionUpdate()
+    {
         float deltaTime = Time.deltaTime;
         foreach (var factory in activeFactories)
         {
-            if(factory != null)
+            if (factory != null)
             {
                 factory.UpdateProduction(deltaTime);
             }
         }
+    }
+    private void FactoriesServiceUpdate()
+    {
+
     }
 }

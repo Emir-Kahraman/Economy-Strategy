@@ -16,3 +16,5 @@ MonoBehaviour:
   Name: Stone
   Icon: {fileID: 1571432586616209339, guid: b08e754d351788b409213d4ceab5cf43, type: 3}
   VolumePerUnit: 5
+  ProductionLevel: 2
+  ProductionHard: 0

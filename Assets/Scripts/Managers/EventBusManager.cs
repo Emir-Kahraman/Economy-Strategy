@@ -18,6 +18,9 @@ public class EventBusManager : MonoBehaviour
     public event Action OnSwitchToBuildingGameMode;
     public event Action OnSwitchToDemolitionGameMode;
     public event Action OnSwitchToResourceAllocationMode;
+    public event Action<OrderData> OnOrderCreated;
+    public event Action OnOrderAccepted;
+    public event Action<bool> OnOrderExpired;
 
     private void Awake()
     {
@@ -44,5 +47,8 @@ public class EventBusManager : MonoBehaviour
     public void SwitchToObservationGameMode() => OnSwitchToObservationGameMode?.Invoke();
     public void SwitchToBuildingGameMode() => OnSwitchToBuildingGameMode?.Invoke();
     public void SwitchToDemolitionGameMode() => OnSwitchToDemolitionGameMode?.Invoke();
-    public void SwitchToResourceAllocationMode() => OnSwitchToResourceAllocationMode?.Invoke();
+    public void SwitchToResourceAllocationMode() => OnSwitchToResourceAllocationMode?.Invoke();//
+    public void OrderCreated(OrderData orderData) => OnOrderCreated?.Invoke(orderData);
+    public void OrderAccepted() => OnOrderAccepted?.Invoke();
+    public void OrderExpired(bool isAcceptedOrder) => OnOrderExpired?.Invoke(isAcceptedOrder);
 }

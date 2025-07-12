@@ -7,4 +7,6 @@ public class ResourceData : ScriptableObject
     public string Name;
     public Sprite Icon;
     public float VolumePerUnit = 1f;
+    public int ProductionLevel;
+    public int ProductionHard;
 }

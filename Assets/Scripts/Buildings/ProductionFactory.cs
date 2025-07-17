@@ -16,10 +16,11 @@ public class ProductionFactory : MonoBehaviour
     public class ProductionData
     {
         public string factoryName;
+        public int serviceCost;
         public ResourceType outputResource;
+        public int neededWorkers;
         public float baseProductionTime;
         public int baseOutputAmount;
-        public int priority;
 
         [Space]
         public List<ProductionCondition> conditions = new();
@@ -46,17 +47,25 @@ public class ProductionFactory : MonoBehaviour
     private HashSet<Vector3Int> blockedCells = new();
     
     private float currentProgress;
-    private float currentEfficiency = 1f;
+    private float currentEfficiency;
 
-    private bool isPaused = false;
-    private bool isActive;
+    private bool needsMaintenance;
+    private bool isPaused;
+    private bool isOperational;
+    private bool isInEditMode;
 
-    public string FactoryName => productionData.factoryName;
-    public int Priority => productionData.priority;
+    private float serviceTime;
+
+    private int workerCount;
+    private int playerSetWorkerLimit;
+
+    public ProductionData FactoryProductionData => productionData;
+    public List<ProductionCondition> ProductionConditions => productionData.conditions;//Нужна ли?
     public float CurrentProgress => currentProgress;
-    public List<ProductionCondition> ProductionConditions => productionData.conditions;
+    public float WorkerCount => workerCount;
+    public float PlayerSetWorkerLimit => playerSetWorkerLimit;
     public bool IsPaused => isPaused;
-    public bool IsActive => isActive;
+    public bool IsOperational => isOperational;
     
     private void Awake()
     {
@@ -72,6 +81,7 @@ public class ProductionFactory : MonoBehaviour
         InitializeFactory();
         InitializeResourceLists();
         InitializeConditions();
+        InitializeParameters();
         InitializeEvents();
     }
     private void InitializeFactory()
@@ -82,6 +92,7 @@ public class ProductionFactory : MonoBehaviour
     {
         ProductionManager.Instance.UnregisterFactory(this);
         TilemapManager.Instance.ReleaseCells(this);
+        EventBusManager.Instance.DissolutionWorkers(workerCount);
     }
     private void InitializeResourceLists()
     {
@@ -102,6 +113,14 @@ public class ProductionFactory : MonoBehaviour
             condition.requestedAmount = condition.requiredAmount;
         }
         CheckForDuplicateConditions();
+    }
+    private void InitializeParameters()
+    {
+        currentEfficiency = 1f;
+        needsMaintenance = false;
+        isPaused = false;
+        serviceTime = 10f;
+        playerSetWorkerLimit = productionData.neededWorkers;
     }
     private void InitializeEvents()
     {
@@ -124,14 +143,16 @@ public class ProductionFactory : MonoBehaviour
 
     public void UpdateProduction(float deltaTime)
     {
+        if (isInEditMode) return;
         if (IsPaused) return;
         PullRequiredResources();
+        ReceivingWorkers();
         CalculateProductionEfficiency();
         UpdateActiveStatus();
 
-        if (!isActive) return;
+        if (!isOperational) return;
         CompleteProductionCycle(deltaTime);
-    }
+    }    
     private void PullRequiredResources()
     {
         foreach (var condition in productionData.conditions)
@@ -194,6 +215,21 @@ public class ProductionFactory : MonoBehaviour
             }
         }
     }
+    private void ReceivingWorkers()
+    {
+        int needed = playerSetWorkerLimit - workerCount;
+        if (needed < 0)
+        {
+            workerCount = playerSetWorkerLimit;
+            EventBusManager.Instance.DissolutionWorkers(Mathf.Abs(needed));
+            return;
+        }
+        else if (needed > 0)
+        {
+            int receivedWorkers = WorkerSystemManager.Instance.GetFreeWorkers(needed);
+            workerCount += receivedWorkers;
+        }
+    }
     private void CalculateProductionEfficiency()
     {
         float currentMinEfficiency = 1f;
@@ -215,13 +251,18 @@ public class ProductionFactory : MonoBehaviour
             if (efficiency < currentMinEfficiency) currentMinEfficiency = efficiency;
         }
         currentEfficiency = currentMinEfficiency;
+
+        float workerModifier = (float)workerCount / productionData.neededWorkers;
+        currentEfficiency *= workerModifier;
+
+        if (needsMaintenance) currentEfficiency /= 2;
     }
     private void UpdateActiveStatus()
     {
-        isActive = true;
+        isOperational = true;
         if(currentEfficiency <= 0.01f)
         {
-            isActive = false;
+            isOperational = false;
         }
     }
     private void CompleteProductionCycle(float deltaTime)
@@ -286,10 +327,39 @@ public class ProductionFactory : MonoBehaviour
         return amount = allocatedCells.ContainsKey(resourceType) ? allocatedCells[resourceType].Count : resourcesInProduction[resourceType];
     }
 
+    public void ServiceUpdate(float deltaTime)
+    {
+        serviceTime -= deltaTime;
+        if (serviceTime <= 0)
+        {
+            serviceTime = 10f;
+            if (CurrencyManager.Instance.GetCurrentMoney() <= 0)
+            {
+                needsMaintenance = true;
+            }
+            else
+            {
+                needsMaintenance = false;
+            }
+            CurrencyManager.Instance.SpendMoney(productionData.serviceCost);
+        }
+    }
+
+    public void SetWorkerLimit(int count)
+    {
+        playerSetWorkerLimit = count;
+    }
+
     public void SetPaused(bool pause)
     {
         isPaused = pause;
         ProductionManager.Instance.ManagerFactory(this);
+        EventBusManager.Instance.DissolutionWorkers(workerCount);
+        workerCount = 0;
+    }
+    public void SetEditPaused(bool pause)
+    {
+        isInEditMode = pause;
     }
 
     private void OnValidate()

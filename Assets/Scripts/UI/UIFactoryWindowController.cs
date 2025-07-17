@@ -18,24 +18,32 @@ public class ConditionUIData
 
 public class UIFactoryWindowController : MonoBehaviour, IUIWindow
 {
-    public GameObject targetWindow;
-    public TextMeshProUGUI factoryNameText;
-    public Slider productionProgressSlider;
-    public TextMeshProUGUI statusText;
-    public TextMeshProUGUI outputResourceText;
-    public Button switchStatusButton;
-    public Button closeButton;
+    [SerializeField] private GameObject targetWindow;
+    [SerializeField] private TextMeshProUGUI factoryNameText;
+    [SerializeField] private Slider productionProgressSlider;
+    [SerializeField] private TextMeshProUGUI statusText;
+    [SerializeField] private TextMeshProUGUI outputResourceText;
+    [SerializeField] private Button switchStatusButton;
+    [SerializeField] private Button closeButton;
 
     [Header("Condition UI")]
-    public Transform inputConditionContainer;
-    public GameObject conditionElementPrefab;
-    public Sprite storageConditionIcon;
-    public Sprite environmentConditionIcon;
+    [SerializeField] private Transform inputConditionContainer;
+    [SerializeField] private GameObject conditionElementPrefab;
+    [SerializeField] private Sprite storageConditionIcon;
+    [SerializeField] private Sprite environmentConditionIcon;
+
+    [Header("Workers UI")]
+    [SerializeField] private TextMeshProUGUI workerCountText;
+    [SerializeField] private GameObject workerLimitSliderPanel;
+    [SerializeField] private Slider workerLimitSlider;
+    [SerializeField] private TextMeshProUGUI workerLimitText;
 
     [Header("Sub Controllers")]
-    public UIResourceAllocationEnvironmentSubController allocationEnvironmentController;
-    public UIResourceAllocationStorageSubController allocationStorageController;
+    [SerializeField] private UIResourceAllocationEnvironmentSubController allocationEnvironmentController;
+    [SerializeField] private UIResourceAllocationStorageSubController allocationStorageController;
 
+    private int playerSetWorkerLimit;
+    
     private List<UIConditionElement> conditionElements = new();
     private ProductionFactory targetFactory;
     private bool isUpdating;
@@ -43,6 +51,7 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
     public void Initialize()
     {
         InitializeButtons();
+        InitializeObjects();
         InitializeSubControllers();
         InitializeStartSettings();
     }
@@ -50,6 +59,10 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
     {
         switchStatusButton.onClick.AddListener(SwitchStatus);
         closeButton.onClick.AddListener(CloseWindowRequest);
+    }
+    private void InitializeObjects()
+    {
+        workerLimitSlider.onValueChanged.AddListener(WorkerLimitSliderChanged);
     }
     private void InitializeSubControllers()
     {
@@ -65,7 +78,16 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
     {
         targetFactory = factory;
         CreateConditionElements();
-        UpdateUI();
+        SetUIElements();
+    }
+    private void SetUIElements()
+    {
+        factoryNameText.text = targetFactory.FactoryProductionData.factoryName;
+        outputResourceText.text = GetResourceName(targetFactory.FactoryProductionData.outputResource);
+        workerLimitSlider.maxValue = targetFactory.FactoryProductionData.neededWorkers;
+        workerLimitSlider.value = targetFactory.PlayerSetWorkerLimit;
+        workerLimitSlider.interactable = !targetFactory.IsPaused;
+        workerLimitSliderPanel.SetActive(workerLimitSlider.maxValue > 1);
     }
     private void CreateConditionElements()
     {
@@ -90,17 +112,21 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
     }
     private void Update()
     {
-        if(isUpdating && targetFactory != null) UpdateUI();
+        if (isUpdating && targetFactory != null) UpdateUIElements();
     }
-    private void UpdateUI()
+    private void UpdateUIElements()
+    {
+        UpdateProductionUI();
+        UpdateWorkerCountUI();
+    }
+
+    private void UpdateProductionUI()
     {
         if (targetFactory == null) return;
 
-        factoryNameText.text = targetFactory.FactoryName;
         productionProgressSlider.value = targetFactory.CurrentProgress;
-        statusText.text = targetFactory.IsPaused ? "Paused" : (targetFactory.IsActive ? "Active" : "Inactive");
+        statusText.text = targetFactory.IsPaused ? "Paused" : (targetFactory.IsOperational ? "Active" : "Inactive");
         switchStatusButton.GetComponentInChildren<TextMeshProUGUI>().text = targetFactory.IsPaused ? "Paused" : "Active";//сложная операция
-        
 
         UpdateConditionData();
     }
@@ -137,7 +163,7 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
 
                 int actualAmount = targetFactory.GetAmountResourceInProduction(condition.requiredResource);
                 
-                data.description = $"{GetCellResourceName(condition.requiredResource)}: {actualAmount}/ {condition.requiredAmount}";
+                data.description = $"{GetResourceName(condition.requiredResource)}: {actualAmount}/ {condition.requiredAmount}";
 
                 efficiency = (float)actualAmount / condition.requiredAmount;
                 data.status = GetStatusFromEfficiency(efficiency);
@@ -151,7 +177,13 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
         else if (efficiency >= 0.01f) return ConditionStatus.PartiallyMet;
         return ConditionStatus.NotMet;
     }
-    private string GetCellResourceName(ResourceType type)
+
+    private void UpdateWorkerCountUI()
+    {
+        workerCountText.text = $"{targetFactory.WorkerCount} / {targetFactory.FactoryProductionData.neededWorkers}";
+    }
+
+    private string GetResourceName(ResourceType type)
     {
         switch (type)
         {
@@ -166,14 +198,14 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
 
     public void OpenAllocationEnvironmentEditor(ProductionFactory.ProductionCondition condition)
     {
-        targetFactory.SetPaused(true);
-        allocationEnvironmentController.SetData(targetFactory, condition, GetCellResourceName(condition.requiredResource), this);
+        targetFactory.SetEditPaused(true);
+        allocationEnvironmentController.SetData(targetFactory, condition, GetResourceName(condition.requiredResource), this);
         EventBusManager.Instance.WindowOpenRequested(allocationEnvironmentController);
     }
     public void OpenAllocationStorageEditor(ProductionFactory.ProductionCondition condition)
     {
-        targetFactory.SetPaused(true);
-        allocationStorageController.SetData(targetFactory, condition, GetCellResourceName(condition.requiredResource), this);
+        targetFactory.SetEditPaused(true);
+        allocationStorageController.SetData(targetFactory, condition, GetResourceName(condition.requiredResource), this);
         EventBusManager.Instance.WindowOpenRequested(allocationStorageController);
     }
 
@@ -182,9 +214,17 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
         if(targetFactory != null)
         {
             targetFactory.SetPaused(!targetFactory.IsPaused);
-            UpdateUI();
+            if (targetFactory.IsPaused) workerLimitSlider.interactable = false;
+            else workerLimitSlider.interactable = true;
         }
     }
+    private void WorkerLimitSliderChanged(float value)
+    {
+        playerSetWorkerLimit = (int)value;
+        workerLimitText.text = playerSetWorkerLimit.ToString();
+        targetFactory.SetWorkerLimit(playerSetWorkerLimit);
+    }
+
     private void CloseWindowRequest()
     {
         EventBusManager.Instance.WindowCloseRequested(this);

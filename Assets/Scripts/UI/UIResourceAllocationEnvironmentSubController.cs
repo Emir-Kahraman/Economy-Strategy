@@ -146,7 +146,7 @@ public class UIResourceAllocationEnvironmentSubController : MonoBehaviour, IUIWi
     }
     public void CloseWindow()
     {
-        if (targetFactory != null) targetFactory.SetPaused(false);
+        if (targetFactory != null) targetFactory.SetEditPaused(false);
         targetWindow.SetActive(false);
         cellsInRadius.Clear();
         DeleteAllHighlights();

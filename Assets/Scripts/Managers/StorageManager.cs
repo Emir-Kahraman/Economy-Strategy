@@ -86,6 +86,11 @@ public class StorageManager : MonoBehaviour
         InvokeStartEvents();
         AddStartResources();
     }
+    private void InvokeStartEvents()
+    {
+        EventBusManager.Instance.ResourceDataUpdated(allResources);
+        EventBusManager.Instance.StorageCapacityUpdated(totalCapacity);
+    }
     private void AddStartResources()
     {
         for (int i = 0; i < startResources.Count; i++)
@@ -94,11 +99,6 @@ public class StorageManager : MonoBehaviour
             var amount = startResources[i].amount;
             AddResource(type, amount);
         }
-    }
-    private void InvokeStartEvents()
-    {
-        EventBusManager.Instance.ResourceDataUpdated(allResources);
-        EventBusManager.Instance.StorageCapacityUpdated(totalCapacity);
     }
 
     public bool AddResource(ResourceType type, int amount)
@@ -138,9 +138,5 @@ public class StorageManager : MonoBehaviour
     {
         totalCapacity += changeCapacity;
         EventBusManager.Instance.StorageCapacityUpdated(totalCapacity);
-    }
-    public bool CanDeleteStorageBuilding()//
-    {
-        return true;
     }
 }

@@ -5,6 +5,9 @@ using System.Collections.Generic;
 public class EventBusManager : MonoBehaviour
 {
     public static EventBusManager Instance;
+    public event Action OnBankruptcy;
+    public event Action<float> OnBankruptcyProcess;
+    public event Action<string> OnGameOver;
     public event Action<int> OnMoneyChanged;
     public event Action<ResourceType, int> OnResourceUpdated;
     public event Action<float> OnStorageCapacityUpdated;
@@ -21,6 +24,13 @@ public class EventBusManager : MonoBehaviour
     public event Action<OrderData> OnOrderCreated;
     public event Action OnOrderAccepted;
     public event Action<bool> OnOrderExpired;
+    public event Action<int> OnWorkerLimitUpdate;
+    public event Action<int> OnWorkerCountUpdate;
+    public event Action<int> OnDissolutionWorkers;
+    public event Action<int> OnUnemploymentWorkerCountUpdate;
+    public event Action<int> OnWorkerHousingBuilt;
+    public event Action<float> OnSatisfactionLevelUpdate;
+    public event Action<float> OnSatisfactionModifierUpdate;
 
     private void Awake()
     {
@@ -35,6 +45,9 @@ public class EventBusManager : MonoBehaviour
         gameObject.name = "EventBusManager";
     }
 
+    public void Bankruptcy() => OnBankruptcy?.Invoke();
+    public void BankruptcyProcess(float value) => OnBankruptcyProcess?.Invoke(value);
+    public void GameOver(string cause) => OnGameOver?.Invoke(cause);
     public void MoneyChanged(int value) => OnMoneyChanged?.Invoke(value);
     public void ResourceUpdated(ResourceType type, int value) => OnResourceUpdated?.Invoke(type, value);
     public void StorageCapacityUpdated(float value) => OnStorageCapacityUpdated?.Invoke(value);
@@ -51,4 +64,11 @@ public class EventBusManager : MonoBehaviour
     public void OrderCreated(OrderData orderData) => OnOrderCreated?.Invoke(orderData);
     public void OrderAccepted() => OnOrderAccepted?.Invoke();
     public void OrderExpired(bool isAcceptedOrder) => OnOrderExpired?.Invoke(isAcceptedOrder);
+    public void WorkerLimitUpdate(int limit) => OnWorkerLimitUpdate?.Invoke(limit);
+    public void WorkerCountUpdate(int count) => OnWorkerCountUpdate?.Invoke(count);
+    public void DissolutionWorkers(int count) => OnDissolutionWorkers?.Invoke(count);
+    public void UnemploymentWorkerCountUpdate(int count) => OnUnemploymentWorkerCountUpdate?.Invoke(count);
+    public void WorkerHousingBuilt(int value) => OnWorkerHousingBuilt?.Invoke(value);
+    public void SatisfactionLevelUpdate(float value) => OnSatisfactionLevelUpdate?.Invoke(value);
+    public void SatisfactionModifierUpdate(float modifier) => OnSatisfactionModifierUpdate?.Invoke(modifier);
 }

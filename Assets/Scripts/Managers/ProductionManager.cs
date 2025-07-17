@@ -7,13 +7,24 @@ public class ProductionManager : MonoBehaviour
 {
     public static ProductionManager Instance;
 
+    private bool _bankruptcy = false;
+
     private readonly List<ProductionFactory> allFactories = new();//Пока нигде не используем
     private readonly List<ProductionFactory> activeFactories = new();
     private ProductionFactory targetFactory;
 
     private void Awake()
     {
+        Initialize();
+    }
+    private void OnDestroy()
+    {
+        UninitializeEvents();
+    }
+    private void Initialize()
+    {
         InitializeSingleton();
+        InitializeEvents();
     }
     private void InitializeSingleton()
     {
@@ -22,6 +33,18 @@ public class ProductionManager : MonoBehaviour
 
         DontDestroyOnLoad(gameObject);
         gameObject.name = "ProductionManager";
+    }
+    private void InitializeEvents()
+    {
+        EventBusManager.Instance.OnBankruptcy += Bankruptcy;
+    }
+    private void UninitializeEvents()
+    {
+        EventBusManager.Instance.OnBankruptcy -= Bankruptcy;
+    }
+    private void Bankruptcy()
+    {
+        _bankruptcy = true;
     }
 
     public void ManagerFactory(ProductionFactory factory)
@@ -53,21 +76,19 @@ public class ProductionManager : MonoBehaviour
         if (!activeFactories.Contains(targetFactory))
         {
             activeFactories.Add(targetFactory);
-            SortActiveFactoriesByPriority();
         }
     }
     private void DeactivateFactory()
     {
-        if (activeFactories.Remove(targetFactory)) SortActiveFactoriesByPriority();
-    }
-    private void SortActiveFactoriesByPriority()
-    {
-        activeFactories.Sort((a, b) => a.Priority.CompareTo(b.Priority));
+        activeFactories.Remove(targetFactory);
     }
 
     private void Update()
-    {        
+    {
+        if (_bankruptcy) return;
+
         FactoriesProductionUpdate();
+        FactoriesServiceUpdate();
     }
     private void FactoriesProductionUpdate()
     {
@@ -82,6 +103,11 @@ public class ProductionManager : MonoBehaviour
     }
     private void FactoriesServiceUpdate()
     {
+        float deltaTime = Time.deltaTime;
+        foreach (var factory in allFactories)
+        {
+            if (factory != null) factory.ServiceUpdate(deltaTime);
+        }
 
     }
 }

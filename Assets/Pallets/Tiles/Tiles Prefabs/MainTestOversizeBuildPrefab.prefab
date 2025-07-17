@@ -63,10 +63,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   productionData:
     factoryName: Test Oversize Building
+    serviceCost: 0
     outputResource: 1
+    neededWorkers: 1
     baseProductionTime: 3
     baseOutputAmount: 1
-    priority: 1
     conditions:
     - requiredResource: 4
       requiredAmount: 6

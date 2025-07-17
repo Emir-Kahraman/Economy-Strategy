@@ -14,6 +14,9 @@ public class OrderSpawnRule
 public class OrdersManager : MonoBehaviour
 {
     public static OrdersManager Instance;
+
+    private bool _bankruptcy = false;
+
     [SerializeField] private List<OrderSpawnRule> spawnRules = new();
     [SerializeField] private float baseExistenceTime;
     [SerializeField] private float baseCompletionTime;
@@ -78,15 +81,22 @@ public class OrdersManager : MonoBehaviour
     }
     private void InitializeEvents()
     {
+        EventBusManager.Instance.OnBankruptcy += Bankruptcy;
         EventBusManager.Instance.OnResourceDataUpdated += SetResourceDates;
         EventBusManager.Instance.OnOrderAccepted += AcceptOrder;
         EventBusManager.Instance.OnOrderExpired += DeleteOrder;
     }
     private void UninitializeEvents()
     {
+        EventBusManager.Instance.OnBankruptcy -= Bankruptcy;
         EventBusManager.Instance.OnResourceDataUpdated -= SetResourceDates;
         EventBusManager.Instance.OnOrderAccepted -= AcceptOrder;
         EventBusManager.Instance.OnOrderExpired -= DeleteOrder;
+    }
+    
+    private void Bankruptcy()
+    {
+        _bankruptcy = true;
     }
 
     private void SetResourceDates(List<ResourceData> dates)
@@ -95,6 +105,8 @@ public class OrdersManager : MonoBehaviour
     }
     private void Update()
     {
+        if (_bankruptcy) return;
+
         UpdateTimeModifier();
         UpdateRuleTimer();
         UpdateOrderSpawning();

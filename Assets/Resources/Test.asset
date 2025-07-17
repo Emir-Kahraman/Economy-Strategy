@@ -17,4 +17,4 @@ MonoBehaviour:
   Icon: {fileID: -8107158825473223733, guid: 8a04fa18ec1be5b4c80980a65e40e2ba, type: 3}
   VolumePerUnit: 2
   ProductionLevel: 3
-  ProductionHard: 0
+  ProductionHard: 5

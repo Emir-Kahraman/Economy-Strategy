@@ -44,16 +44,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2085d11c0c61196439257e0f3cc8be65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  spawnRules:
-  - ruleTime: 30
-    spawnInterval: 1
-    productionLevel: 3
-    maxActiveOrders: 20
-  - ruleTime: 30
-    spawnInterval: 1
-    productionLevel: 1
-    maxActiveOrders: 10
-  baseExistenceTime: 5
+  baseExistenceTime: 15
   baseCompletionTime: 20
-  baseResourceAmount: 1
-  baseRewardAmount: 20
+  baseResourceAmount: 10
+  baseOrderSpawnTimer: 1
+  maxActiveOrders: 999
+  increaseValue: 5
+  currentPeriod: 1
+  maxPeriod: 1
+  timerToIIPeriod: 2
+  timerToIIIPeriod: 2
+  timerToIVPeriod: 2

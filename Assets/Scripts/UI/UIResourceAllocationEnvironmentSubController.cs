@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps;
 using UnityEngine.UI;
 
-public class UIResourceAllocationEnvironmentSubController : MonoBehaviour, IUIWindow //После же упраления условий склада.
+public class UIResourceAllocationEnvironmentSubController : MonoBehaviour, IUIWindow
 {
     [SerializeField] private GameObject targetWindow;
     [SerializeField] private TextMeshProUGUI conditionNameText;
@@ -36,7 +36,7 @@ public class UIResourceAllocationEnvironmentSubController : MonoBehaviour, IUIWi
     }
     private void InitializeParameters()
     {
-        resourceTilemap = TilemapManager.Instance.GetTilemapType(TilemapType.Resource);
+        resourceTilemap = TilemapManager.Instance.GetTilemapOfType(TilemapType.Resources);
     }
     private void InitializeObjects()
     {
@@ -58,12 +58,12 @@ public class UIResourceAllocationEnvironmentSubController : MonoBehaviour, IUIWi
     }
     private void UIAmountPanelUpdate()
     {
-        currentAmountResourceText.text = targetFactory.GetAmountResourceInProduction(targetCondition.requiredResource).ToString();
+        currentAmountResourceText.text = targetFactory.GetAmountResourceInProduction(targetCondition.requiredResource.Type).ToString();
         conditionAmountResourceText.text = "/ " + targetCondition.requiredAmount.ToString();
     }
     private void CellsHighlightsUpdate()
     {
-        var cells = TilemapManager.Instance.GetCellsInRadius(targetFactory.transform.position, targetCondition.requiredResource, targetCondition.requiredTileRadius);
+        var cells = TilemapManager.Instance.GetResourceCellsInRadius(targetFactory.transform.position, targetCondition.requiredResource.Type, targetCondition.requiredTileRadius);
         foreach (var cell in cells)
         {
             cellsInRadius[cell] = TilemapManager.Instance.GetProductionFactoryInResourceCell(cell);
@@ -94,7 +94,7 @@ public class UIResourceAllocationEnvironmentSubController : MonoBehaviour, IUIWi
 
             if (!cellsInRadius.TryGetValue(cell, out ProductionFactory factory)) return;
 
-            if (factory == null && targetFactory.GetAmountResourceInProduction(targetCondition.requiredResource) < targetCondition.requiredAmount) targetFactory.HandleCellOccupy(cell, targetCondition);
+            if (factory == null && targetFactory.GetAmountResourceInProduction(targetCondition.requiredResource.Type) < targetCondition.requiredAmount) targetFactory.HandleCellOccupy(cell, targetCondition);
             else if (factory == targetFactory) targetFactory.HandleCellRelease(cell, targetCondition);
             else return;
 

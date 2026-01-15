@@ -31,18 +31,11 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
     [SerializeField] private GameObject conditionElementPrefab;
     [SerializeField] private Sprite storageConditionIcon;
     [SerializeField] private Sprite environmentConditionIcon;
-
-    [Header("Workers UI")]
-    [SerializeField] private TextMeshProUGUI workerCountText;
-    [SerializeField] private GameObject workerLimitSliderPanel;
-    [SerializeField] private Slider workerLimitSlider;
-    [SerializeField] private TextMeshProUGUI workerLimitText;
+    [SerializeField] private TextMeshProUGUI serviceCostText;
 
     [Header("Sub Controllers")]
     [SerializeField] private UIResourceAllocationEnvironmentSubController allocationEnvironmentController;
     [SerializeField] private UIResourceAllocationStorageSubController allocationStorageController;
-
-    private int playerSetWorkerLimit;
     
     private List<UIConditionElement> conditionElements = new();
     private ProductionFactory targetFactory;
@@ -51,7 +44,6 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
     public void Initialize()
     {
         InitializeButtons();
-        InitializeObjects();
         InitializeSubControllers();
         InitializeStartSettings();
     }
@@ -59,10 +51,6 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
     {
         switchStatusButton.onClick.AddListener(SwitchStatus);
         closeButton.onClick.AddListener(CloseWindowRequest);
-    }
-    private void InitializeObjects()
-    {
-        workerLimitSlider.onValueChanged.AddListener(WorkerLimitSliderChanged);
     }
     private void InitializeSubControllers()
     {
@@ -83,11 +71,9 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
     private void SetUIElements()
     {
         factoryNameText.text = targetFactory.FactoryProductionData.factoryName;
-        outputResourceText.text = GetResourceName(targetFactory.FactoryProductionData.outputResource);
-        workerLimitSlider.maxValue = targetFactory.FactoryProductionData.neededWorkers;
-        workerLimitSlider.value = targetFactory.PlayerSetWorkerLimit;
-        workerLimitSlider.interactable = !targetFactory.IsPaused;
-        workerLimitSliderPanel.SetActive(workerLimitSlider.maxValue > 1);
+        outputResourceText.text = GetResourceName(targetFactory.FactoryProductionData.outputResource.Type);
+        serviceCostText.text = targetFactory.ServiceCost.ToString();
+
     }
     private void CreateConditionElements()
     {
@@ -117,7 +103,6 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
     private void UpdateUIElements()
     {
         UpdateProductionUI();
-        UpdateWorkerCountUI();
     }
 
     private void UpdateProductionUI()
@@ -150,7 +135,7 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
             case ProductionFactory.ProductionCondition.ConditionType.StorageResource:
                 data.icon = storageConditionIcon;
 
-                int currentAmount = targetFactory.GetAmountResourceInProduction(condition.requiredResource);
+                int currentAmount = targetFactory.GetAmountResourceInProduction(condition.requiredResource.Type);
                 data.description = $"{condition.requiredResource}: {currentAmount}/ {condition.requiredAmount}";
                
                 efficiency = (float)currentAmount / condition.requiredAmount;
@@ -161,9 +146,9 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
             case ProductionFactory.ProductionCondition.ConditionType.EnvironmentTile:
                 data.icon = environmentConditionIcon;
 
-                int actualAmount = targetFactory.GetAmountResourceInProduction(condition.requiredResource);
+                int actualAmount = targetFactory.GetAmountResourceInProduction(condition.requiredResource.Type);
                 
-                data.description = $"{GetResourceName(condition.requiredResource)}: {actualAmount}/ {condition.requiredAmount}";
+                data.description = $"{GetResourceName(condition.requiredResource.Type)}: {actualAmount}/ {condition.requiredAmount}";
 
                 efficiency = (float)actualAmount / condition.requiredAmount;
                 data.status = GetStatusFromEfficiency(efficiency);
@@ -176,11 +161,6 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
         if(efficiency >= 0.99f) return ConditionStatus.FullyMet;
         else if (efficiency >= 0.01f) return ConditionStatus.PartiallyMet;
         return ConditionStatus.NotMet;
-    }
-
-    private void UpdateWorkerCountUI()
-    {
-        workerCountText.text = $"{targetFactory.WorkerCount} / {targetFactory.FactoryProductionData.neededWorkers}";
     }
 
     private string GetResourceName(ResourceType type)
@@ -199,30 +179,22 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
     public void OpenAllocationEnvironmentEditor(ProductionFactory.ProductionCondition condition)
     {
         targetFactory.SetEditPaused(true);
-        allocationEnvironmentController.SetData(targetFactory, condition, GetResourceName(condition.requiredResource), this);
+        allocationEnvironmentController.SetData(targetFactory, condition, GetResourceName(condition.requiredResource.Type), this);
         EventBusManager.Instance.WindowOpenRequested(allocationEnvironmentController);
     }
     public void OpenAllocationStorageEditor(ProductionFactory.ProductionCondition condition)
     {
         targetFactory.SetEditPaused(true);
-        allocationStorageController.SetData(targetFactory, condition, GetResourceName(condition.requiredResource), this);
+        allocationStorageController.SetData(targetFactory, condition, GetResourceName(condition.requiredResource.Type), this);
         EventBusManager.Instance.WindowOpenRequested(allocationStorageController);
     }
-
+    
     private void SwitchStatus()
     {
         if(targetFactory != null)
         {
             targetFactory.SetPaused(!targetFactory.IsPaused);
-            if (targetFactory.IsPaused) workerLimitSlider.interactable = false;
-            else workerLimitSlider.interactable = true;
         }
-    }
-    private void WorkerLimitSliderChanged(float value)
-    {
-        playerSetWorkerLimit = (int)value;
-        workerLimitText.text = playerSetWorkerLimit.ToString();
-        targetFactory.SetWorkerLimit(playerSetWorkerLimit);
     }
 
     private void CloseWindowRequest()
@@ -232,6 +204,7 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
 
     public void OpenWindow()
     {
+        targetWindow.SetActive(true);
         targetWindow.SetActive(true);
         isUpdating = true;
     }

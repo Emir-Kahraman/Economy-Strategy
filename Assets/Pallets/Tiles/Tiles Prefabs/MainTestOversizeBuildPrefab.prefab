@@ -47,7 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isBuildable: 0
   isResource: 0
-  isDestructibleResource: 0
+  isDestructible: 1
   resourceType: 0
 --- !u!114 &-3211476252401482163
 MonoBehaviour:
@@ -61,16 +61,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 821ea8e579c930e42a89ecb5d5d89208, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buildingData: {fileID: 11400000, guid: 0924df0f3baced24089c1bd408b9d32b, type: 2}
   productionData:
     factoryName: Test Oversize Building
-    serviceCost: 0
-    outputResource: 1
-    neededWorkers: 1
+    outputResource: {fileID: 11400000, guid: 8dc32631463e81544b7b1cfbc2c9e32b, type: 2}
+    baseServiceCost: 0
     baseProductionTime: 3
     baseOutputAmount: 1
     conditions:
-    - requiredResource: 4
+    - requiredResource: {fileID: 11400000, guid: c355fdd6fd8d3884398f76abefd66a15, type: 2}
       requiredAmount: 6
       conditionType: 0
       requestedAmount: 0
       requiredTileRadius: 0
+  baseServiceTime: 0

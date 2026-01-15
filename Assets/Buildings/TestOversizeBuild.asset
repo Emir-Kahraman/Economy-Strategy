@@ -12,6 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd5db0ae5f17e2045bf92f79c49a6a9b, type: 3}
   m_Name: TestOversizeBuild
   m_EditorClassIdentifier: 
+  BuildingObject: {fileID: 0}
+  Period: 4
   mainTile: {fileID: 11400000, guid: c01da82b559271e4fa4151565bbbc1dd, type: 2}
   secondaryTiles:
   - {fileID: 11400000, guid: abacfbefa67d63443abf9e7bf50a991d, type: 2}
@@ -19,7 +21,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 1c6c86c936ea8304daad2b8ffb25bc17, type: 2}
   tilemapType: 2
   size: {x: 2, y: 2}
+  placementRequirement: {fileID: 0}
   canReplaceResources: 1
   icon: {fileID: 2015522216, guid: 938745e710b1df54aa919c63ac906faf, type: 3}
   cost: 0
-  buildingType: 1
+  buildingCategory: 1
+  resourcesForBuild: []

@@ -10,13 +10,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: cd5db0ae5f17e2045bf92f79c49a6a9b, type: 3}
-  m_Name: SmallWorkerHousing
+  m_Name: Quarry
   m_EditorClassIdentifier: 
-  mainTile: {fileID: 11400000, guid: 99d2cdb0b13d1a14d8fb256cabd1f987, type: 2}
+  BuildingObject: {fileID: 0}
+  Period: 3
+  mainTile: {fileID: 11400000, guid: 3bce9b0b0e9805447be883f4e9efbd5d, type: 2}
   secondaryTiles: []
   tilemapType: 2
   size: {x: 1, y: 1}
+  placementRequirement: {fileID: 11400000, guid: f3cd17147d943e7489157d5f1c098d22, type: 2}
   canReplaceResources: 1
-  icon: {fileID: 3831514002506076562, guid: 97267f2c3d577e24288bd2cd0f893f2c, type: 3}
-  cost: 10
-  buildingType: 3
+  icon: {fileID: 6957840113194601433, guid: d63c26417c6311a4c80560d952cc6d0c, type: 3}
+  cost: 20
+  buildingCategory: 3
+  resourcesForBuild: []

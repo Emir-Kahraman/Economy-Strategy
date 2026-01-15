@@ -12,11 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd5db0ae5f17e2045bf92f79c49a6a9b, type: 3}
   m_Name: Forest
   m_EditorClassIdentifier: 
+  BuildingObject: {fileID: 0}
+  Period: 1
   mainTile: {fileID: 11400000, guid: 2aa0575d097ec474499a1e2bb7e682bd, type: 2}
   secondaryTiles: []
   tilemapType: 1
   size: {x: 1, y: 1}
+  placementRequirement: {fileID: 11400000, guid: 6b2c08baaff9ba244a3524b00a38c1c8, type: 2}
   canReplaceResources: 0
   icon: {fileID: -4832618155596115187, guid: 2d126a23ff4a9e548aa553242669bd5e, type: 3}
   cost: 10
-  buildingType: 3
+  buildingCategory: 0
+  resourcesForBuild: []

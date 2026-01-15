@@ -6,6 +6,7 @@ public class StorageBuilding : MonoBehaviour
     [SerializeField] private int serviceCost;
     private float serviceTime = 10f;
     public float GetCapacity() => capacity;
+    public int ServiceCost => serviceCost;
 
     private void Awake()
     {

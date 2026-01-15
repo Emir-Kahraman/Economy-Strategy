@@ -1,41 +1,44 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices.WindowsRuntime;
+using UnityEditor.UI;
 using UnityEngine;
 
-[Serializable]
-public class OrderSpawnRule
-{
-    public int ruleTime;
-    public int spawnInterval;
-    public int productionLevel;
-    public int maxActiveOrders;
-}
 public class OrdersManager : MonoBehaviour
 {
     public static OrdersManager Instance;
 
     private bool _bankruptcy = false;
 
-    [SerializeField] private List<OrderSpawnRule> spawnRules = new();
     [SerializeField] private float baseExistenceTime;
     [SerializeField] private float baseCompletionTime;
     [SerializeField] private int baseResourceAmount;
-    [SerializeField] private int baseRewardAmount;
-
-    private int currentRuleIndex = 0;
-    private float ruleTimer;
-    private float spawnTimer;
-    private int maxActiveOrders;
+    [SerializeField] private float baseOrderSpawnTimer;
+    [SerializeField] private int maxActiveOrders;
+    [SerializeField] private float increaseValue;
+    [SerializeField] private Period currentPeriod;
+    [Header("Level Parameters")]
+    [SerializeField] private Period maxPeriod;
+    [SerializeField] private int timerToIIPeriod;
+    [SerializeField] private int timerToIIIPeriod;
+    [SerializeField] private int timerToIVPeriod;
+    
+    private float orderSpawnTimer;
+    
     private int activeOrdersCount;
-    private int maxAcceptedOrders = 4;
+    private int maxAcceptedOrders = 8;
     private int acceptedOrdersCount;
-    private int currentProductionLevel;
+    private float demandBonusPerPeriod = 0.25f;
+    private float completionTimeBonusPerPeriod = 0.15f;
+    private float timeToNewPeriod;
 
-    private float gameTime;
-    private float timeModifier = 1f;
+    private Coroutine increaseDemand;
 
     private List<ResourceData> resourceDates = new();
+    private List<ResourceData> availableResources = new();
+    private Dictionary<ResourceData, float> resourceDemand = new();
 
     private void Awake()
     {
@@ -48,7 +51,6 @@ public class OrdersManager : MonoBehaviour
     private void Initialize()
     {
         InitializeSingleton();
-        ApplyRule();
         InitializeEvents();
     }
     private void InitializeSingleton()
@@ -59,32 +61,13 @@ public class OrdersManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         gameObject.name = "OrdersManager";
     }
-    private void ApplyRule()
-    {
-        if (spawnRules.Count == 0)
-        {
-            Debug.LogError("Количество spawnRules равно 0");
-            return;
-        }
-        currentRuleIndex = Mathf.Clamp(currentRuleIndex, 0, spawnRules.Count - 1);
-
-        OrderSpawnRule rule = spawnRules[currentRuleIndex];
-        ruleTimer = rule.ruleTime;
-        spawnTimer = rule.spawnInterval;
-        currentProductionLevel = rule.productionLevel;
-        if (currentProductionLevel == 0)
-        {
-            currentProductionLevel = 1;
-            Debug.LogError("ProductionLevel = 0!");
-        }
-        maxActiveOrders = rule.maxActiveOrders;
-    }
     private void InitializeEvents()
     {
         EventBusManager.Instance.OnBankruptcy += Bankruptcy;
         EventBusManager.Instance.OnResourceDataUpdated += SetResourceDates;
         EventBusManager.Instance.OnOrderAccepted += AcceptOrder;
         EventBusManager.Instance.OnOrderExpired += DeleteOrder;
+        EventBusManager.Instance.OnOrderCompleted += OrderCompleted;
     }
     private void UninitializeEvents()
     {
@@ -92,6 +75,7 @@ public class OrdersManager : MonoBehaviour
         EventBusManager.Instance.OnResourceDataUpdated -= SetResourceDates;
         EventBusManager.Instance.OnOrderAccepted -= AcceptOrder;
         EventBusManager.Instance.OnOrderExpired -= DeleteOrder;
+        EventBusManager.Instance.OnOrderCompleted -= OrderCompleted;
     }
     
     private void Bankruptcy()
@@ -102,42 +86,104 @@ public class OrdersManager : MonoBehaviour
     private void SetResourceDates(List<ResourceData> dates)
     {
         resourceDates = dates;
+        UpdateAvailableResource();
     }
+
+    private void UpdateAvailableResource()
+    {
+        availableResources = resourceDates.Where(resource => IsPeriodAllowed(resource.Period) && resource.CanBeOrdered).ToList();
+        foreach (var resource in availableResources)
+        {
+            if (!resourceDemand.ContainsKey(resource))
+            {
+                resourceDemand[resource] = 1;
+            }
+        }
+    }
+
+    private void Start()
+    {
+        SetPeriodTimer();
+        EventBusManager.Instance.CurrentPeriodUpdated(currentPeriod);
+
+        if (increaseDemand == null)
+        {
+            increaseDemand = StartCoroutine(IncreaseDemand());
+        }
+        else StopCoroutine(increaseDemand);
+    }
+
+    private void SetPeriodTimer()
+    {
+        switch (currentPeriod)
+        {
+            case Period.I: timeToNewPeriod = timerToIIPeriod; break;
+            case Period.II: timeToNewPeriod = timerToIIIPeriod; break;
+            case Period.III: timeToNewPeriod = timerToIVPeriod; break;
+            default:timeToNewPeriod = 0; break;
+        }
+    }
+
+
     private void Update()
     {
         if (_bankruptcy) return;
-
-        UpdateTimeModifier();
-        UpdateRuleTimer();
+        PeriodTimer();
         UpdateOrderSpawning();
     }
-    private void UpdateTimeModifier()
+
+    private IEnumerator IncreaseDemand()
     {
-        if (timeModifier > 3) return;
-        gameTime += Time.deltaTime;
-        if (gameTime >= 10f)
+        while (true)
         {
-            gameTime = 0;
-            timeModifier += 0.1f;
+            foreach (var resource in resourceDemand.Keys)
+            {
+                Debug.Log(resource.Type + "/" + resourceDemand[resource]);
+            }
+            yield return new WaitForSeconds(1f);
+
+            increaseValue *= Time.deltaTime;
+            List<ResourceData> keys = new List<ResourceData>(resourceDemand.Keys);
+            foreach (var resource in keys)
+            {
+                if (resourceDemand[resource] < 1)
+                {
+                    resourceDemand[resource] += increaseValue;
+                }
+                Mathf.Min(1f, resourceDemand[resource]);
+            }
         }
     }
-    private void UpdateRuleTimer()
-    {
-        ruleTimer -= Time.deltaTime;
 
-        if (ruleTimer <= 0 && currentRuleIndex < spawnRules.Count - 1)
+    private void PeriodTimer()
+    {
+        if ((int)currentPeriod >= (int)maxPeriod) return;
+        timeToNewPeriod -= Time.deltaTime;
+        if (timeToNewPeriod <= 0)
         {
-            currentRuleIndex++;
-            ApplyRule();
+            UpdatePeriod();
         }
+    }
+    private void UpdatePeriod()
+    {
+        switch (currentPeriod)
+        {
+            case Period.I: currentPeriod = Period.II; break;
+            case Period.II: currentPeriod = Period.III; break;
+            case Period.III: currentPeriod = Period.IV; break;
+            default: currentPeriod = Period.IV; Debug.LogError("Лимит в 4 Периода!"); break;
+        }
+        SetPeriodTimer();
+        UpdateAvailableResource();
+        EventBusManager.Instance.CurrentPeriodUpdated(currentPeriod);
     }
 
     private void UpdateOrderSpawning()
     {
         if (activeOrdersCount >= maxActiveOrders) return;
-
-        spawnTimer -= Time.deltaTime;
-        if (spawnTimer <= 0)
+        
+        orderSpawnTimer -= Time.deltaTime;
+        if (orderSpawnTimer <= 0)
         {
             SpawnOrder();
             ResetSpawnTimer();
@@ -145,73 +191,62 @@ public class OrdersManager : MonoBehaviour
     }
     private void SpawnOrder()
     {
-        OrderData newOrder = GenerateRandomOrder();
+        OrderData newOrder = GenerateOrder();
         activeOrdersCount++;
-        EventBusManager.Instance?.OrderCreated(newOrder);
+        EventBusManager.Instance.OrderCreated(newOrder);
     }
-    private OrderData GenerateRandomOrder()
+    private OrderData GenerateOrder()
     {
-        string id = Guid.NewGuid().ToString();
+        string id = Guid.NewGuid().ToString();//Есть вероятность повторения id, стоит создать словарь имеющихся заказов
         ResourceData resourceData = SelectResource();
         float existenceTime = GetExistenceTime();
-        int resourceAmount = GetResourceAmount(resourceData.ProductionHard);
-        float completionTime = GetCompletionTime(resourceAmount, resourceData.ProductionHard);
-        int reward = GetRewardAmount(resourceAmount, resourceData.ProductionLevel, resourceData.ProductionHard);
+        int resourceAmount = GetOrderResourceAmount(resourceData);
+        float completionTime = GetCompletionTime(resourceData);
+        int reward = GetRewardAmount(resourceAmount, resourceData);
 
         return new OrderData(id, existenceTime, completionTime, resourceData, resourceAmount, reward);
     }
     private ResourceData SelectResource()
     {
-        var validResources = resourceDates.Where(r => r.ProductionLevel <= currentProductionLevel).ToList();
-
-        List<float> weights = new List<float>();
         float totalWeight = 0;
-
-        foreach (var resource in validResources)
+        foreach (var demand in resourceDemand.Values) 
         {
-            int delta = currentProductionLevel - resource.ProductionLevel;
-            float weight = 6f / Mathf.Pow(2, delta);
-
-            weights.Add(weight);
-            totalWeight += weight;
+            totalWeight += demand;
         }
 
-        float randomPoint = UnityEngine.Random.Range(1, totalWeight);
-        float currentWeight = 0;
 
-        for (int i = 0; i < validResources.Count; i++)
+        float randomValue = UnityEngine.Random.Range(0, totalWeight);
+        float currentSum = 0f;
+
+        foreach (var kvp in resourceDemand)
         {
-            currentWeight += weights[i];
-            if (randomPoint <= currentWeight)
+            currentSum += kvp.Value;
+            if (randomValue <= currentSum)
             {
-                return validResources[i];
+                return kvp.Key;
             }
         }
-        return validResources.Last();
+        return availableResources.Last();
+    }
+    private bool IsPeriodAllowed(Period resourcePeriod)
+    {
+        return (int)resourcePeriod <= (int)currentPeriod;
     }
     private float GetExistenceTime()
     {
         return CalculateRandomValue(baseExistenceTime, 20f);
     }
-    private int GetResourceAmount(int hardLevel)
+    private int GetOrderResourceAmount(ResourceData resource)
     {
-        float value = baseResourceAmount / (hardLevel / 10f) * timeModifier;
-        return Mathf.FloorToInt(CalculateRandomValue(value, 40f));
+        return (int)(baseResourceAmount * (1 + demandBonusPerPeriod * (currentPeriod - resource.Period)));
     }
-    private float GetCompletionTime(int resourceAmount, float hardLevel)
+    private float GetCompletionTime(ResourceData resource)
     {
-        float amountModifier = resourceAmount / baseResourceAmount / 5f;
-        float hardLevelModifier = hardLevel / 10f;
-        float value = baseCompletionTime + (baseCompletionTime * amountModifier) + (baseCompletionTime * hardLevelModifier);
-        return CalculateRandomValue(value, 20f);
+        return baseCompletionTime * (1 + completionTimeBonusPerPeriod * ((int)resource.Period - 1));
     }
-    private int GetRewardAmount(int resourceAmount, int productionLevel, int hardLevel)
+    private int GetRewardAmount(int resourceAmount, ResourceData resource)
     {
-        float amountModifier = resourceAmount / baseResourceAmount / 10f;
-        float productionLevelModifier = productionLevel / 10f;
-        float hardLevelModifier = hardLevel / 10f;
-        float value = baseRewardAmount + (baseRewardAmount * amountModifier) + (baseRewardAmount * productionLevelModifier) + (baseRewardAmount * hardLevelModifier);
-        return Mathf.FloorToInt(CalculateRandomValue(value, 40f));
+        return (int)CalculateRandomValue((resourceAmount * resource.Price), 10f);
     }
 
     private float CalculateRandomValue(float amount, float percent)
@@ -224,10 +259,10 @@ public class OrdersManager : MonoBehaviour
 
     private void ResetSpawnTimer()
     {
-        spawnTimer = spawnRules[currentRuleIndex].spawnInterval;
+        orderSpawnTimer = baseOrderSpawnTimer;
     }
 
-    private void AcceptOrder()//Через событие скорее будет вызываться
+    private void AcceptOrder()
     {
         if (acceptedOrdersCount < maxAcceptedOrders)
         {
@@ -244,5 +279,15 @@ public class OrdersManager : MonoBehaviour
     {
         if (isAcceptedOrder) acceptedOrdersCount--;
         else activeOrdersCount--;
+    }
+    private void OrderCompleted(ResourceData resource, int reward)
+    {
+        DecreasingDemand(resource);
+        CurrencyManager.Instance.AddMoney(reward);
+    }
+    private void DecreasingDemand(ResourceData resource)
+    {
+        resourceDemand[resource] -= 0.2f;
+        if (resourceDemand[resource] < 0) resourceDemand[resource] = 0;
     }
 }

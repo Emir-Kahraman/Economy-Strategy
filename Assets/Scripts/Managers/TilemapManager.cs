@@ -4,19 +4,27 @@ using Unity.VisualScripting;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 using UnityEngine.Tilemaps;
 using UnityEngine.UIElements;
+
+public enum TilemapType
+{
+    Ground,
+    Resources,
+    Buildings
+}
 
 public class TilemapManager : MonoBehaviour
 {
     public static TilemapManager Instance { get; private set; }
 
     [SerializeField] private Tilemap groundTilemap;
-    [SerializeField] private Tilemap resourceTilemap;
+    [SerializeField] private Tilemap resourcesTilemap;
     [SerializeField] private Tilemap buildingTilemap;
     
     private string groundTilemapTag = "Ground Tilemap";
-    private string resourceTilemapTag = "Resources Tilemap";
+    private string resourcesTilemapTag = "Resources Tilemap";
     private string buildingTilemapTag = "Buildings Tilemap";
 
     private Dictionary<Vector3Int, ResourceType> resourceCellsCache = new();
@@ -41,22 +49,19 @@ public class TilemapManager : MonoBehaviour
     }
     private void Initialize()
     {
-        InitializeTilemapReferences();
+        InitializeTilemaps();
         InitializeResourceCache();
         InitializeEvents();
     }
-    private void InitializeTilemapReferences()
+    private void InitializeTilemaps()
     {
         groundTilemap = GameObject.FindWithTag(groundTilemapTag).GetComponent<Tilemap>();
-        resourceTilemap = GameObject.FindWithTag(resourceTilemapTag).GetComponent<Tilemap>();
+        resourcesTilemap = GameObject.FindWithTag(resourcesTilemapTag).GetComponent<Tilemap>();
         buildingTilemap = GameObject.FindWithTag(buildingTilemapTag).GetComponent<Tilemap>();
-
-        groundTilemap.CompressBounds();
-        resourceTilemap.RefreshAllTiles();
     }
     private void InitializeResourceCache()
     {
-        BoundsInt bounds = resourceTilemap.cellBounds;
+        BoundsInt bounds = resourcesTilemap.cellBounds;
 
         foreach (var cell in bounds.allPositionsWithin)
         {
@@ -68,20 +73,25 @@ public class TilemapManager : MonoBehaviour
     }
     private void InitializeEvents()
     {
-        EventBusManager.Instance.OnResourceTilemapUpdated += UpdateResourceCellCache;
+        EventBusManager.Instance.OnResourceBuilt += BuiltResource;
+        EventBusManager.Instance.OnBuildingBuilt += BuiltBuilding;
+        EventBusManager.Instance.OnResourceDeleted += DeletedResource;
+        EventBusManager.Instance.OnBuildingDeleted += DeletedBuilding;
     }
     private void UninitializeEvents()
     {
-        EventBusManager.Instance.OnResourceTilemapUpdated -= UpdateResourceCellCache;
+        EventBusManager.Instance.OnResourceBuilt -= BuiltResource;
+        EventBusManager.Instance.OnBuildingBuilt -= BuiltBuilding;
+        EventBusManager.Instance.OnResourceDeleted -= DeletedResource;
+        EventBusManager.Instance.OnBuildingDeleted -= DeletedBuilding;
     }
-
     private bool TryGetCellResourceType(Vector3Int cell, out ResourceType tileResourceType)
     {
         tileResourceType = ResourceType.None;
+        
+        if (!resourcesTilemap.HasTile(cell)) return false;
 
-        if (!resourceTilemap.HasTile(cell)) return false;
-
-        GameObject tileGO = resourceTilemap.GetInstantiatedObject(cell);
+        GameObject tileGO = resourcesTilemap.GetInstantiatedObject(cell);
         if (tileGO == null) return false;
 
         TileData data = tileGO.GetComponent<TileData>();
@@ -107,26 +117,26 @@ public class TilemapManager : MonoBehaviour
         return productionFactory;
     }
 
-    public ProductionFactory GetProductionFactoryInResourceCell(Vector3Int cell)//
+    public ProductionFactory GetProductionFactoryInResourceCell(Vector3Int cell)
     {
         if (!occupiedCells.ContainsKey(cell)) return null;
         return occupiedCells[cell];
     }
 
-    public Tilemap GetTilemapType(TilemapType type)
+    public Tilemap GetTilemapOfType(TilemapType type)
     {
         switch (type)
         {
             case TilemapType.Ground: return groundTilemap;
-            case TilemapType.Resource: return resourceTilemap;
-            case TilemapType.Obstacle: return buildingTilemap;
+            case TilemapType.Resources: return resourcesTilemap;
+            case TilemapType.Buildings: return buildingTilemap;
             default: return null;
         }
     }
 
-    public List<Vector3Int> GetCellsInRadius(Vector3 center, ResourceType tileType, int  radius)
+    public List<Vector3Int> GetResourceCellsInRadius(Vector3 center, ResourceType tileType, int  radius)
     {
-        Vector3Int centerCell = resourceTilemap.WorldToCell(center);
+        Vector3Int centerCell = resourcesTilemap.WorldToCell(center);
         List<Vector3Int> tilesInRadius = new();
 
         for (int x = -radius; x <= radius; x++)
@@ -143,6 +153,7 @@ public class TilemapManager : MonoBehaviour
         }
         return tilesInRadius;
     }
+
     public void OccupyCell(Vector3Int cell, ProductionFactory factory)
     {
         occupiedCells[cell] = factory;
@@ -163,9 +174,67 @@ public class TilemapManager : MonoBehaviour
         foreach (var cell in toRemove) occupiedCells.Remove(cell);
     }
 
-    private void UpdateResourceCellCache(Vector3Int cell)
+    private void BuiltResource(Vector3Int cell, BuildingData data)
     {
-        if (TryGetCellResourceType(cell, out ResourceType type)) 
+        resourcesTilemap.SetTile(cell, data.mainTile);
+        if (TryGetCellResourceType(cell, out ResourceType tileResource))
+        {
+            resourceCellsCache.Add(cell, tileResource);
+        }
+        else
+        {
+            Debug.LogError("Тип ресурса не найден!");
+        }
+        
+    }
+    private void DeletedResource(Vector3Int cell)
+    {
+        resourcesTilemap.SetTile(cell, null);
+        resourceCellsCache.Remove(cell);
+    }
+
+    private void BuiltBuilding(Vector3Int cell, BuildingData data)
+    {
+        buildingTilemap.SetTile(cell, data.mainTile);
+        if (data.size != new Vector2Int(1, 1))
+        {
+            int index = 0;
+            for (int x = 0; x < data.size.x; x++)
+            {
+                for (int y = 0;  y < data.size.y; y++)
+                {
+                    if (x == 0 && y == 0) continue;
+                    Vector3Int cellPos = cell + new Vector3Int(x, y);
+                    buildingTilemap.SetTile(cell, data.secondaryTiles[index]);
+                    index++;
+                }
+            }
+        }
+
+    }
+    private void DeletedBuilding(Vector3Int cell, BuildingData data)
+    {
+        buildingTilemap.SetTile(cell, null);
+        if (data.size != new Vector2Int(1, 1))
+        {
+            int index = 0;
+            for (int x = 0; x < data.size.x; x++)
+            {
+                for (int y = 0; y < data.size.y; y++)
+                {
+                    if (x == 0 && y == 0) continue;
+                    Vector3Int cellPos = cell + new Vector3Int(x, y);
+                    buildingTilemap.SetTile(cell, null);
+                    index++;
+                }
+            }
+        }
+    }
+
+    private void UpdateResourceCellsCache(Vector3Int cell)//Изменить логику.
+    {
+        Debug.Log(resourcesTilemap.GetTile(cell));
+        if (TryGetCellResourceType(cell, out ResourceType type))
             resourceCellsCache[cell] = type;
         else
         {

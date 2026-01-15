@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1187527116939206029
+--- !u!1 &8297953009260511637
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,50 +8,46 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 3540842420109368352}
-  - component: {fileID: 572295488890336433}
+  - component: {fileID: 5871289401095237027}
+  - component: {fileID: 7266326511198478224}
   m_Layer: 0
-  m_Name: WorkerSystemManager
+  m_Name: BuildingManager
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &3540842420109368352
+--- !u!4 &5871289401095237027
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1187527116939206029}
+  m_GameObject: {fileID: 8297953009260511637}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 406.1916, y: 46.803566, z: -0.045910552}
+  m_LocalPosition: {x: -3.2597442, y: 2.801947, z: 9.98426}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &572295488890336433
+--- !u!114 &7266326511198478224
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1187527116939206029}
+  m_GameObject: {fileID: 8297953009260511637}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 754bbe9e0d7665c44bdfc46e9b987459, type: 3}
+  m_Script: {fileID: 11500000, guid: 9fc61ff5c639f9f43ae1d171a37cef0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseWorkerLimit: 2
-  highEmploymentBoost: 0.02
-  lowUnemploymentBoost: 0.01
-  mediumUnemploymentPenalty: -0.01
-  highUnemploymentPenalty: -0.02
-  homelessnessImpactFactor: 0.01
-  highestSatisfaction: 4
-  highSatisfaction: 2
-  mediumSatisfaction: 1
-  lowSatisfaction: -1
-  lowestSatisfaction: -3
+  allBuildings:
+  - {fileID: 11400000, guid: 34cc4f451f414ec48ab9f00850547c70, type: 2}
+  - {fileID: 11400000, guid: 07310621caa3b3842ab4d46545efe212, type: 2}
+  - {fileID: 11400000, guid: 085056f0d9a0b0746a1e56a75f41bdd6, type: 2}
+  - {fileID: 11400000, guid: 0924df0f3baced24089c1bd408b9d32b, type: 2}
+  - {fileID: 11400000, guid: 1cc65665cb0929a43bb3f52d86562913, type: 2}
+  highlightPrefab: {fileID: 8629992729356725567, guid: 0031de7edc62b4f4bb78fd5770938f5d, type: 3}

@@ -3,6 +3,8 @@ using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps;
 using System.Collections.Generic;
 using System;
+using System.Linq;
+using Unity.VisualScripting;
 
 
 public class BuildingManager : MonoBehaviour
@@ -16,37 +18,31 @@ public class BuildingManager : MonoBehaviour
 
     public static BuildingManager Instance;
 
-    [Header("References")]
-    public Tilemap groundTilemap;
-    public Tilemap resourceTilemap;
-    public Tilemap buildingTilemap;
-    public TileBase groundTile;
+    [SerializeField] private List<BuildingData> allBuildings;
 
     [Header("Building Ghost")]
-    public GameObject highlightPrefab;
+    [SerializeField] private GameObject highlightPrefab;
 
     private GameObject currentHighlight;
     private SpriteRenderer highlightSpriteRenderer;
     private BuildingData currentBuilding;
 
-    private string groundTilemapTag = "Ground Tilemap";
-    private string resourceTilemapTag = "Resources Tilemap";
-    private string buildingTilemapTag = "Buildings Tilemap";
-
     private Dictionary<Vector3Int, BuildingRecord> buildingRegistry = new();
 
     private void Awake()
     {
-        InitializeSingleton();
         Initialize();
     }
-    void Update()
-    {        
-        if (GameModeManager.Instance.CurrentMode == GameModeManager.GameMode.Building && currentBuilding != null) Building();
-        if (GameModeManager.Instance.CurrentMode == GameModeManager.GameMode.Demolition) Demolition();
-        return;
+    private void Initialize()
+    {
+        InitializeSingleton();
+        InitializeObjects();
+        InitializeEvents();
     }
-
+    private void OnDestroy()
+    {
+        UninitializeEvents();
+    }
     private void InitializeSingleton()
     {
         if (Instance == null) Instance = this;
@@ -55,104 +51,99 @@ public class BuildingManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
         gameObject.name = "BuildingManager";
     }
-    private void Initialize()
-    {
-        InitializeObjects();
-        CreateObjects();
-    }
     private void InitializeObjects()
-    {
-        groundTilemap = GameObject.FindWithTag(groundTilemapTag).GetComponent<Tilemap>();
-        resourceTilemap = GameObject.FindWithTag(resourceTilemapTag).GetComponent<Tilemap>();
-        buildingTilemap = GameObject.FindWithTag(buildingTilemapTag).GetComponent<Tilemap>();
-    }
-    private void CreateObjects()
     {
         currentHighlight = Instantiate(highlightPrefab);
         highlightSpriteRenderer = currentHighlight.GetComponent<SpriteRenderer>();
         currentHighlight.SetActive(false);
     }
+    private void InitializeEvents()
+    {
+        
+    }
+    private void UninitializeEvents()
+    {
+        
+    }
+
+    private void Start()
+    {
+        InvokeStartEvents();
+    }
+
+    private void InvokeStartEvents()
+    {
+        EventBusManager.Instance.BuildingDataUpdated(allBuildings);
+    }
+
+    void Update()
+    {
+        if (GameModeManager.Instance.CurrentMode == GameModeManager.GameMode.Building && currentBuilding != null) Building();
+        if (GameModeManager.Instance.CurrentMode == GameModeManager.GameMode.Demolition) Demolition();
+        return;
+    }
 
     private void Building()
     {
         Vector3Int cellPos = MouseToCellPositionOfGroundTilemap();
-        bool isPlacementValid = IsPlacementValid(cellPos, out bool destroyableResource);        
+        bool isPlacementValid = IsPlacementValid(cellPos);
         UpdateHighlight(cellPos, isPlacementValid);
-        PlaceBuilding(cellPos, isPlacementValid, destroyableResource);
+        PlaceBuilding(cellPos, isPlacementValid);
     }
 
     private Vector3Int MouseToCellPositionOfGroundTilemap()
     {
         Vector3 mouseWorldPos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        return groundTilemap.WorldToCell(mouseWorldPos);
+        return GetTilemapFromTilemapManager(TilemapType.Ground).WorldToCell(mouseWorldPos);
     }
 
-    bool IsPlacementValid(Vector3Int cell, out bool destroyableResource)
+    private bool IsPlacementValid(Vector3Int cell)
     {
-        destroyableResource = true;
+        bool isTerrainValid = true;
+        bool isTerrainClear = true;
+        bool canPlace = true;
+
+        List<Vector3Int> list = new();
         for (int x = 0; x < currentBuilding.size.x; x++)
         {
             for (int y = 0; y < currentBuilding.size.y; y++)
             {
                 Vector3Int checkPos = cell + new Vector3Int(x, y);
-                if (groundTilemap.GetTile(checkPos) != groundTile || buildingTilemap.GetTile(checkPos) != null) return false;
-
-                if (resourceTilemap.GetTile(checkPos) != null)
-                destroyableResource = TryGetDestructibleResource(checkPos) && currentBuilding.canReplaceResources ? true : false;
+                list.Add(checkPos);
+                if (GetTilemapFromTilemapManager(TilemapType.Ground).GetTile(checkPos) != currentBuilding.placementRequirement) isTerrainValid = false;
+                if (!IsTerrainClear(checkPos)) isTerrainClear = false;
             }
         }
-        return destroyableResource;
+        canPlace = isTerrainValid & isTerrainClear;
+        return canPlace;
     }
     private void UpdateHighlight(Vector3Int cell, bool isPlacementValid)
     {
         Vector3 offset = new Vector3(
-        (currentBuilding.size.x - 1) * groundTilemap.cellSize.x * 0.5f,
-        (currentBuilding.size.y - 1) * groundTilemap.cellSize.y * 0.5f,
-        0
-        );
-        currentHighlight.transform.position = groundTilemap.GetCellCenterWorld(cell) + offset;
+        (currentBuilding.size.x - 1) * 0.5f,
+        (currentBuilding.size.y - 1) * 0.5f,
+        0);
+        currentHighlight.transform.position = GetTilemapFromTilemapManager(TilemapType.Ground).GetCellCenterWorld(cell) + offset;
         highlightSpriteRenderer.color = isPlacementValid ? new Color(0, 1, 0, 0.25f) : new Color(1, 0, 0, 0.25f);        
     }
-    private void PlaceBuilding(Vector3Int cell, bool isPlacementValid, bool destroyableResource)
+    private void PlaceBuilding(Vector3Int cell, bool isPlacementValid)
     {
         if(EventSystem.current.IsPointerOverGameObject()) return;
-        if(CurrencyManager.Instance.GetCurrentMoney() < currentBuilding.cost) return;
+        if(CurrencyManager.Instance.GetCurrentMoney() < currentBuilding.cost) return;//Изменить, позже.
 
         if (Input.GetMouseButtonDown(0) && isPlacementValid)
         {
-            CurrencyManager.Instance.TrySpendMoney(currentBuilding.cost);
+            if (!CurrencyManager.Instance.TrySpendMoney(currentBuilding.cost)) return;
 
-            if (destroyableResource)
+            if (currentBuilding.tilemapType == TilemapType.Resources)
             {
-                for (int x = 0; x < currentBuilding.size.x; x++)
-                {
-                    for (int y = 0; y < currentBuilding.size.y; y++)
-                    {
-                        DeleteResourceTile(cell + new Vector3Int(x, y));
-                    }
-                }
+                EventBusManager.Instance.ResourceBuilt(cell, currentBuilding);
             }
-
-            Tilemap targetTilemap = TilemapManager.Instance.GetTilemapType(currentBuilding.tilemapType);
-            targetTilemap.SetTile(cell, currentBuilding.mainTile);
-
-            if (currentBuilding.tilemapType == TilemapType.Resource)
-                EventBusManager.Instance.ResourceTilemapUpdated(cell);
-
-            int index = 0;
-            for (int x = 0; x < currentBuilding.size.x; x++)
+            else if (currentBuilding.tilemapType == TilemapType.Buildings)
             {
-                for (int y = 0; y < currentBuilding.size.y; y++)
-                {
-                    if(x == 0 && y == 0) continue;
-
-                    Vector3Int tellPos = cell + new Vector3Int(x, y);
-                    targetTilemap.SetTile(tellPos, currentBuilding.secondaryTiles[index]);                    
-                    index++;
-                }
-            }
-            if(currentBuilding.tilemapType == TilemapType.Obstacle)
+                EventBusManager.Instance.BuildingBuilt(cell, currentBuilding);
                 RegisterBuilding(cell, currentBuilding);
+            }
         }
     }
     private void RegisterBuilding(Vector3Int startCell, BuildingData building)
@@ -178,20 +169,62 @@ public class BuildingManager : MonoBehaviour
     private void Demolition()
     {
         Vector3Int cellPos = MouseToCellPositionOfGroundTilemap();
-        bool canDemolish = IsDestructibleCell(cellPos) && CanDemolish(cellPos);
-        UpdateDemolitionHighlight(cellPos, canDemolish);
+        bool IsDemolitionCell = FindDemolitionCell(cellPos, out TileData demolitionCell);
+        Debug.Log(IsDemolitionCell);
+        UpdateDemolitionHighlight(cellPos, IsDemolitionCell);
 
-        if (Input.GetMouseButtonDown(0) && canDemolish && !EventSystem.current.IsPointerOverGameObject())
-            DemolishAt(cellPos);
+        if (Input.GetMouseButtonDown(0) && IsDemolitionCell && !EventSystem.current.IsPointerOverGameObject())
+        {
+            if (CanDemolish(demolitionCell))
+            {
+                DemolishAt(cellPos);
+            }
+            else
+            {
+                Debug.Log("Объект нельзя уничтожить!");
+            }
+        }
     }
-    private bool IsDestructibleCell(Vector3Int cell)
-    {        
-        return buildingTilemap.GetTile(cell) != null ||
-               TryGetDestructibleResource(cell);
-    }
-    private bool CanDemolish(Vector3Int cell)
+
+    private bool FindDemolitionCell(Vector3Int cellPos, out TileData demolitionCell)
     {
-        if (buildingTilemap.GetTile(cell) && buildingTilemap.GetInstantiatedObject(cell).TryGetComponent(out StorageBuilding building))
+        demolitionCell = null;
+
+        GameObject tile = GetTilemapFromTilemapManager(TilemapType.Resources).GetInstantiatedObject(cellPos);
+        if (tile != null)
+        {
+            TileData targetTileData = tile.GetComponent<TileData>();
+            if (targetTileData.isDestructible)
+            {
+                demolitionCell = targetTileData;
+                return true;
+            }
+            return false;
+        }
+
+        tile = GetTilemapFromTilemapManager(TilemapType.Buildings).GetInstantiatedObject(cellPos);
+        if (tile != null)
+        {
+            TileData targetTileData = tile.GetComponent<TileData>();
+            if (targetTileData.isDestructible)
+            {
+                demolitionCell = targetTileData;
+                return true;
+            }
+            return false;
+        }
+
+        return false;
+    }
+    private void UpdateDemolitionHighlight(Vector3Int cell, bool canDemolish)
+    {
+        currentHighlight.transform.position = GetTilemapFromTilemapManager(TilemapType.Ground).GetCellCenterWorld(cell);
+        highlightSpriteRenderer.color = canDemolish ? new Color(1, 0, 0, 0.5f) : new Color(0, 0, 0, 0);
+        currentHighlight.transform.localScale = Vector3.one;
+    }
+    private bool CanDemolish(TileData demolitionCell)
+    {
+        if (demolitionCell.TryGetComponent(out StorageBuilding building))
         {
             if (StorageManager.Instance.GetTotalCapacity() - building.GetCapacity() < StorageManager.Instance.GetCurrentVolume())
             {
@@ -200,25 +233,19 @@ public class BuildingManager : MonoBehaviour
         }
         return true;
     }
-    private void UpdateDemolitionHighlight(Vector3Int cell, bool canDemolish)
-    {
-        currentHighlight.transform.position = groundTilemap.GetCellCenterWorld(cell);
-        highlightSpriteRenderer.color = canDemolish ? new Color(1, 0, 0, 0.5f) : new Color(0, 0, 0, 0);
-        currentHighlight.transform.localScale = Vector3.one;
-    }
     private void DemolishAt(Vector3Int cell)
     {
         if(TryGetBuildingDataAt(cell, out BuildingData building, out Vector3Int startCell))
         {
-            BuildingRecord record = buildingRegistry[startCell];
+            EventBusManager.Instance.BuildingDelete(cell, building);
 
+            BuildingRecord record = buildingRegistry[startCell];
             foreach (Vector3Int tilePos in record.occupiedCells)
             {
-                buildingTilemap.SetTile(tilePos, null);
                 buildingRegistry.Remove(tilePos);
             }
         }
-        else if(TryGetDestructibleResource(cell))
+        else
         {
             DeleteResourceTile(cell);
         }
@@ -235,22 +262,27 @@ public class BuildingManager : MonoBehaviour
         }
         return false;
     }
-    private bool TryGetDestructibleResource(Vector3Int cell)
+    private bool IsTerrainClear(Vector3Int cell)
     {
-        if(resourceTilemap.GetTile(cell) == null) return false;
-
-        GameObject resourceOjb = resourceTilemap.GetInstantiatedObject(cell);
-        if(resourceOjb == null) return false;
-
-        TileData tileData = resourceOjb.GetComponent<TileData>();
-
-        return tileData != null && tileData.isDestructibleResource;
+        if (GetTilemapFromTilemapManager(TilemapType.Resources).GetTile(cell))
+        {
+            Debug.Log("Имеется Ресурс на Клетке!");
+            return false;
+        }
+        else if (GetTilemapFromTilemapManager(TilemapType.Buildings).GetTile(cell))
+        {
+            Debug.Log("Имеется Здание на Клетке!");
+            return false;
+        }
+        else
+        {
+            return true;
+        }
     }
 
-    private void DeleteResourceTile(Vector3Int cell)
+    private void DeleteResourceTile(Vector3Int cell)//Вызывается при любых удалениях и изменениях, без проверки на действительные изменение ресурсного тайла - костыльно, требуется доработка.
     {
-        resourceTilemap.SetTile(cell, null);
-        EventBusManager.Instance.ResourceTilemapUpdated(cell);
+        EventBusManager.Instance.ResourceDeleted(cell);
     }
 
     public bool TryGetMainFactoryCell(Vector3Int cell, out Vector3Int mainCell)
@@ -275,7 +307,7 @@ public class BuildingManager : MonoBehaviour
         currentBuilding = data;
         currentHighlight.SetActive(true);
         currentHighlight.transform.localScale = new Vector3(data.size.x, data.size.y, 1);
-    }    
+    }
     public void CancelBuilding()
     {
         currentBuilding = null;
@@ -292,4 +324,6 @@ public class BuildingManager : MonoBehaviour
         currentHighlight.SetActive(false);
         EventBusManager.Instance.SwitchToObservationGameMode();
     }
+
+    private Tilemap GetTilemapFromTilemapManager(TilemapType tilemapType) => TilemapManager.Instance.GetTilemapOfType(tilemapType);
 }

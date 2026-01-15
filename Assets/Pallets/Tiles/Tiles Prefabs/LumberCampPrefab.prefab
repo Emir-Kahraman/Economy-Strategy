@@ -47,7 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isBuildable: 0
   isResource: 0
-  isDestructibleResource: 0
+  isDestructible: 1
   resourceType: 0
 --- !u!114 &3995262446572541172
 MonoBehaviour:
@@ -61,17 +61,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 821ea8e579c930e42a89ecb5d5d89208, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  buildingData: {fileID: 11400000, guid: 07310621caa3b3842ab4d46545efe212, type: 2}
   productionData:
     factoryName: Lumber Camp
-    serviceCost: 100
-    outputResource: 4
-    neededWorkers: 2
-    baseProductionTime: 3
+    outputResource: {fileID: 11400000, guid: c355fdd6fd8d3884398f76abefd66a15, type: 2}
+    baseServiceCost: 20
+    baseProductionTime: 1
     baseOutputAmount: 1
-    priority: 0
     conditions:
-    - requiredResource: 2
+    - requiredResource: {fileID: 11400000, guid: 530225f3af8d8df42b9f66864b1ac0eb, type: 2}
       requiredAmount: 2
       conditionType: 1
       requestedAmount: 0
       requiredTileRadius: 2
+  baseServiceTime: 10

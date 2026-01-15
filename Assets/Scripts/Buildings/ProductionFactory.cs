@@ -16,21 +16,20 @@ public class ProductionFactory : MonoBehaviour
     public class ProductionData
     {
         public string factoryName;
-        public int serviceCost;
-        public ResourceType outputResource;
-        public int neededWorkers;
+        public ResourceData outputResource;
+        public int baseServiceCost;
         public float baseProductionTime;
         public int baseOutputAmount;
 
         [Space]
         public List<ProductionCondition> conditions = new();
     }
-    [System.Serializable]
+    [Serializable]
     public class ProductionCondition
     {
         public enum ConditionType { StorageResource, EnvironmentTile }
         
-        public ResourceType requiredResource;
+        public ResourceData requiredResource;
         public int requiredAmount;
         public ConditionType conditionType;
         [Space, Header("Storage Type")]
@@ -39,7 +38,9 @@ public class ProductionFactory : MonoBehaviour
         public int requiredTileRadius;
     }
 
+    [SerializeField] private BuildingData buildingData;
     [SerializeField] private ProductionData productionData;
+    [SerializeField] private float baseServiceTime;
 
     private Dictionary<ResourceType, int> storedResources = new();
     private Dictionary<ResourceType, int> resourcesInProduction = new();
@@ -49,23 +50,18 @@ public class ProductionFactory : MonoBehaviour
     private float currentProgress;
     private float currentEfficiency;
 
-    private bool needsMaintenance;
     private bool isPaused;
     private bool isOperational;
     private bool isInEditMode;
-
     private float serviceTime;
 
-    private int workerCount;
-    private int playerSetWorkerLimit;
-
+    public BuildingData FactoryBuildingData => buildingData;
     public ProductionData FactoryProductionData => productionData;
-    public List<ProductionCondition> ProductionConditions => productionData.conditions;//Ќужна ли?
+    public List<ProductionCondition> ProductionConditions => productionData.conditions;
     public float CurrentProgress => currentProgress;
-    public float WorkerCount => workerCount;
-    public float PlayerSetWorkerLimit => playerSetWorkerLimit;
     public bool IsPaused => isPaused;
     public bool IsOperational => isOperational;
+    public int ServiceCost => productionData.baseServiceCost;
     
     private void Awake()
     {
@@ -92,7 +88,6 @@ public class ProductionFactory : MonoBehaviour
     {
         ProductionManager.Instance.UnregisterFactory(this);
         TilemapManager.Instance.ReleaseCells(this);
-        EventBusManager.Instance.DissolutionWorkers(workerCount);
     }
     private void InitializeResourceLists()
     {
@@ -100,10 +95,10 @@ public class ProductionFactory : MonoBehaviour
         {
             if(resource.conditionType == ProductionCondition.ConditionType.StorageResource)
             {
-                storedResources[resource.requiredResource] = 0;
-                resourcesInProduction[resource.requiredResource] = 0;
+                storedResources[resource.requiredResource.Type] = 0;
+                resourcesInProduction[resource.requiredResource.Type] = 0;
             }
-            else allocatedCells[resource.requiredResource] = new List<Vector3Int>();
+            else allocatedCells[resource.requiredResource.Type] = new List<Vector3Int>();
         }
     }
     private void InitializeConditions()
@@ -117,18 +112,16 @@ public class ProductionFactory : MonoBehaviour
     private void InitializeParameters()
     {
         currentEfficiency = 1f;
-        needsMaintenance = false;
         isPaused = false;
-        serviceTime = 10f;
-        playerSetWorkerLimit = productionData.neededWorkers;
+        serviceTime = baseServiceTime;
     }
     private void InitializeEvents()
     {
-        EventBusManager.Instance.OnResourceTilemapUpdated += BlockedCell;
+        EventBusManager.Instance.OnResourceDeleted += ResourceDeleted; 
     }
     private void UnitializeEvents()
     {
-        EventBusManager.Instance.OnResourceTilemapUpdated -= BlockedCell;
+        EventBusManager.Instance.OnResourceDeleted -= ResourceDeleted;
     }
     
     private void CheckForDuplicateConditions()
@@ -136,8 +129,8 @@ public class ProductionFactory : MonoBehaviour
         HashSet<ResourceType> conditionTypes = new();
         foreach (var condition in productionData.conditions)
         {
-            if (conditionTypes.Contains(condition.requiredResource)) Debug.LogError($"¬ {productionData.factoryName} имеетс€ дубликат услови€!");
-            else conditionTypes.Add(condition.requiredResource);
+            if (conditionTypes.Contains(condition.requiredResource.Type)) Debug.LogError($"¬ {productionData.factoryName} имеетс€ дубликат услови€!");
+            else conditionTypes.Add(condition.requiredResource.Type);
         }
     }
 
@@ -146,7 +139,6 @@ public class ProductionFactory : MonoBehaviour
         if (isInEditMode) return;
         if (IsPaused) return;
         PullRequiredResources();
-        ReceivingWorkers();
         CalculateProductionEfficiency();
         UpdateActiveStatus();
 
@@ -171,28 +163,28 @@ public class ProductionFactory : MonoBehaviour
     private void HandleStorageResourceRequirement(ProductionCondition condition)
     {
         if (currentProgress > 0.85f) return;
-        int neededAmount = Mathf.Max(0, condition.requestedAmount - resourcesInProduction[condition.requiredResource]);
+        int neededAmount = Mathf.Max(0, condition.requestedAmount - resourcesInProduction[condition.requiredResource.Type]);
 
         if (neededAmount > 0)
         {
-            int amountTaken = StorageManager.Instance.ConsumeResource(condition.requiredResource, neededAmount);
+            int amountTaken = StorageManager.Instance.ConsumeResource(condition.requiredResource.Type, neededAmount);
 
             if (amountTaken > 0)
             {
-                storedResources[condition.requiredResource] += amountTaken;
-                resourcesInProduction[condition.requiredResource] = storedResources[condition.requiredResource];
+                storedResources[condition.requiredResource.Type] += amountTaken;
+                resourcesInProduction[condition.requiredResource.Type] = storedResources[condition.requiredResource.Type];
             }
         }
     }
-    private void AllocateEnvironmentTiles(ProductionCondition condition)//срабатывает только в начале по сути, требуетс€ полное изменение логики.
+    private void AllocateEnvironmentTiles(ProductionCondition condition)
     {
-        ResourceType resourceType = condition.requiredResource;
+        ResourceType resourceType = condition.requiredResource.Type;
         
         int needed = Mathf.Max(0, condition.requiredAmount - allocatedCells[resourceType].Count);
 
         if (needed > 0)
         {
-            List<Vector3Int> resourceCellsInRadius = TilemapManager.Instance.GetCellsInRadius(transform.position, resourceType, condition.requiredTileRadius);
+            List<Vector3Int> resourceCellsInRadius = TilemapManager.Instance.GetResourceCellsInRadius(transform.position, resourceType, condition.requiredTileRadius);
             List<Vector3Int> availableCells = new List<Vector3Int>();
             foreach (var tile in resourceCellsInRadius)
             {
@@ -215,21 +207,6 @@ public class ProductionFactory : MonoBehaviour
             }
         }
     }
-    private void ReceivingWorkers()
-    {
-        int needed = playerSetWorkerLimit - workerCount;
-        if (needed < 0)
-        {
-            workerCount = playerSetWorkerLimit;
-            EventBusManager.Instance.DissolutionWorkers(Mathf.Abs(needed));
-            return;
-        }
-        else if (needed > 0)
-        {
-            int receivedWorkers = WorkerSystemManager.Instance.GetFreeWorkers(needed);
-            workerCount += receivedWorkers;
-        }
-    }
     private void CalculateProductionEfficiency()
     {
         float currentMinEfficiency = 1f;
@@ -239,10 +216,10 @@ public class ProductionFactory : MonoBehaviour
             switch (condition.conditionType)
             {
                 case ProductionCondition.ConditionType.StorageResource:
-                    amount = resourcesInProduction[condition.requiredResource];
+                    amount = resourcesInProduction[condition.requiredResource.Type];
                     break;
                 case ProductionCondition.ConditionType.EnvironmentTile:
-                    amount = allocatedCells[condition.requiredResource].Count;
+                    amount = allocatedCells[condition.requiredResource.Type].Count;
                     break;
             }
 
@@ -251,11 +228,6 @@ public class ProductionFactory : MonoBehaviour
             if (efficiency < currentMinEfficiency) currentMinEfficiency = efficiency;
         }
         currentEfficiency = currentMinEfficiency;
-
-        float workerModifier = (float)workerCount / productionData.neededWorkers;
-        currentEfficiency *= workerModifier;
-
-        if (needsMaintenance) currentEfficiency /= 2;
     }
     private void UpdateActiveStatus()
     {
@@ -271,7 +243,7 @@ public class ProductionFactory : MonoBehaviour
         currentProgress += deltaTime / productionTime;
         if (currentProgress < 1f) return;
 
-        if(StorageManager.Instance.AddResource(productionData.outputResource, productionData.baseOutputAmount))
+        if(StorageManager.Instance.AddResource(productionData.outputResource.Type, productionData.baseOutputAmount))
         currentProgress = 0f;
         DeductionConsumedResources();
     }
@@ -281,8 +253,8 @@ public class ProductionFactory : MonoBehaviour
         {
             if (resource.conditionType == ProductionCondition.ConditionType.StorageResource)
             {
-                storedResources[resource.requiredResource] -= resourcesInProduction[resource.requiredResource];
-                resourcesInProduction[resource.requiredResource] = 0;
+                storedResources[resource.requiredResource.Type] -= resourcesInProduction[resource.requiredResource.Type];
+                resourcesInProduction[resource.requiredResource.Type] = 0;
             }
         }
     }
@@ -291,25 +263,33 @@ public class ProductionFactory : MonoBehaviour
     {
         foreach (var condition in productionData.conditions)
         {
-            if (condition.requiredResource == resource) condition.requestedAmount = amount;
+            if (condition.requiredResource.Type == resource) condition.requestedAmount = amount;
         }
     }
 
-    private void BlockedCell(Vector3Int cell)
+    private void ResourceDeleted(Vector3Int cell)
     {
-        if (!blockedCells.Contains(cell)) blockedCells.Add(cell);
+        foreach (var kvp in allocatedCells)
+        {
+            if (kvp.Value.Contains(cell))
+            {
+                allocatedCells[kvp.Key].Remove(cell);
+                TilemapManager.Instance.ReleaseCell(cell);
+            }
+        }
+        
     }
 
     public void HandleCellOccupy(Vector3Int cell, ProductionCondition condition)
     {
         blockedCells.Remove(cell);
-        allocatedCells[condition.requiredResource].Add(cell);
+        allocatedCells[condition.requiredResource.Type].Add(cell);
         TilemapManager.Instance.OccupyCell(cell, this);
     }
     public void HandleCellRelease(Vector3Int cell, ProductionCondition condition)
     {
         blockedCells.Add(cell);
-        allocatedCells[condition.requiredResource].Remove(cell);
+        allocatedCells[condition.requiredResource.Type].Remove(cell);
         TilemapManager.Instance.ReleaseCell(cell);
     }
 
@@ -332,30 +312,15 @@ public class ProductionFactory : MonoBehaviour
         serviceTime -= deltaTime;
         if (serviceTime <= 0)
         {
-            serviceTime = 10f;
-            if (CurrencyManager.Instance.GetCurrentMoney() <= 0)
-            {
-                needsMaintenance = true;
-            }
-            else
-            {
-                needsMaintenance = false;
-            }
-            CurrencyManager.Instance.SpendMoney(productionData.serviceCost);
+            serviceTime = baseServiceTime;
+            CurrencyManager.Instance.SpendMoney(productionData.baseServiceCost);
         }
-    }
-
-    public void SetWorkerLimit(int count)
-    {
-        playerSetWorkerLimit = count;
     }
 
     public void SetPaused(bool pause)
     {
         isPaused = pause;
         ProductionManager.Instance.ManagerFactory(this);
-        EventBusManager.Instance.DissolutionWorkers(workerCount);
-        workerCount = 0;
     }
     public void SetEditPaused(bool pause)
     {

@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9d1514134bc4fbd41bb739b1b9a49231, type: 3}
-  m_Name: SmallWorkerHousingTile
+  m_Name: QuarryTile
   m_EditorClassIdentifier: 
-  m_DefaultSprite: {fileID: 3831514002506076562, guid: 97267f2c3d577e24288bd2cd0f893f2c, type: 3}
-  m_DefaultGameObject: {fileID: 8156184065030911876, guid: 568eea64a714edd478d491f880661e74, type: 3}
+  m_DefaultSprite: {fileID: 6957840113194601433, guid: d63c26417c6311a4c80560d952cc6d0c, type: 3}
+  m_DefaultGameObject: {fileID: 4022228657373132239, guid: d993b8a80475285428cc74f1dd09db4e, type: 3}
   m_DefaultColliderType: 1
   m_TilingRules: []

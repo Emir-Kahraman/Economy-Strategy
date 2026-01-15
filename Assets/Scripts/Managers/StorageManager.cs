@@ -3,14 +3,15 @@ using UnityEngine;
 using System;
 using System.Linq;
 
-public enum ResourceType {None, Test, Forest, Stone_Ore, Wood, Stone}
+public enum Period { I = 1, II = 2, III = 3, IV = 4 }
+public enum ResourceType {None, Test, Forest, Stone_Ore, Wood, Stone, Copper_Ore}
 
 public class StorageManager : MonoBehaviour
 {
     public static StorageManager Instance;
     [SerializeField] private List<ResourceData> allResources;
     [SerializeField] private Dictionary<ResourceType, int> inventory = new();
-    [SerializeField] private float totalCapacity;
+    [SerializeField] private float baseStartCapacity = 100f;
     [SerializeField] private float currentVolume;
     [Serializable]
     private class StartResources
@@ -20,8 +21,8 @@ public class StorageManager : MonoBehaviour
     }
     [SerializeField] private List<StartResources> startResources;
 
-    private float baseStartCapacity = 100f;
 
+    private float totalCapacity;
     private Dictionary<ResourceType, ResourceData> resourceInfos = new();//Не все ресурсы могут быть иниализированы, нужно добавить для этого обработку
     public int GetResourceCount(ResourceType type) => inventory.TryGetValue(type, out var count) ? count : 0;
     public float GetCurrentVolume() => currentVolume;

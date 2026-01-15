@@ -1,31 +1,80 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
+    public static bool Exists => Instance != null;
     public static GameManager Instance;
-    [Header("Префабы Менеджеров")]
-    [SerializeField] private List<GameObject> managersPrefabs = new(); //Ключевой момент, EventBusManager должег быть самым первым!.
+
+    [Header("Persistent Managers")]
+    [SerializeField] private List<GameObject> persistentManagers = new();
+    [Header("Ephemeral Managers")]
+    [SerializeField] private List<GameObject> ephemeralManagers = new();
 
     private void Awake()
     {
-        if(Instance == null)
-        {
-            Instance = this;            
-            DontDestroyOnLoad(gameObject);
-            InitializeManagers();
-        }
-        else Destroy(gameObject);
+        Initialize();
     }
-    private void InitializeManagers()
+    private void OnDestroy()
     {
-        for(int i = 0; i < managersPrefabs.Count; i++)
+        UninitalizeEvents();
+    }
+    private void Initialize()
+    {
+        InitializeSingleton();
+        InitializePersistentManagers();
+        InitializeEvents();
+    }
+
+    private void InitializeSingleton()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+
+        gameObject.name = "GameManager";
+        DontDestroyOnLoad(gameObject);
+    }
+    private void InitializeEvents()
+    {
+        SceneManager.sceneLoaded += InitializeEphemeralManagers;
+        EventBusManager.Instance.OnSceneLoadRequest += LoadScene;
+    }
+    private void UninitalizeEvents()
+    {
+        SceneManager.sceneLoaded -= InitializeEphemeralManagers;
+        EventBusManager.Instance.OnSceneLoadRequest -= LoadScene;
+    }
+
+    private void LoadScene(string sceneName)
+    {
+        SceneManager.LoadScene(sceneName);
+        
+    }
+    private void InitializePersistentManagers()
+    {
+        for(int i = 0; i < persistentManagers.Count; i++)
         {
-            if (managersPrefabs[i] != null)
+            if (persistentManagers[i] != null)
             {
-                GameObject managerObj = Instantiate(managersPrefabs[i]);
+                GameObject managerObj = Instantiate(persistentManagers[i]);
             }
         }
-        Debug.Log($"Все менеджеры в количестве {managersPrefabs.Count} были успешно созданы");
+        Debug.Log($"Р’СЃРµ РіР»РѕР±Р°Р»СЊРЅС‹Рµ РјРµРЅРµРґР¶РµСЂС‹ РІ РєРѕР»РёС‡РµСЃС‚РІРµ {persistentManagers.Count} Р±С‹Р»Рё СѓСЃРїРµС€РЅРѕ СЃРѕР·РґР°РЅС‹");
+        EventBusManager.Instance.SceneLoaded();
+    }
+    private void InitializeEphemeralManagers(Scene currentScene, LoadSceneMode mode)
+    {
+        if (!currentScene.name.StartsWith("Level")) return;
+        for (int i = 0; i < ephemeralManagers.Count ; i++)
+        {
+            if (ephemeralManagers[i] != null)
+            {
+                GameObject managerObj = Instantiate(ephemeralManagers[i]);
+            }
+        }
+        Debug.Log($"Р’СЃРµ Р»РѕРєР°Р»СЊРЅС‹Рµ РјРµРЅРµРґР¶РµСЂС‹ РІ РєРѕР»РёС‡РµСЃС‚РІРµ {ephemeralManagers.Count} Р±С‹Р»Рё СѓСЃРїРµС€РЅРѕ СЃРѕР·РґР°РЅС‹");
+        EventBusManager.Instance.SceneLoaded();
     }
 }

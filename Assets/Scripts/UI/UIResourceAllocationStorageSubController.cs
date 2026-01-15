@@ -54,7 +54,7 @@ public class UIResourceAllocationStorageSubController : MonoBehaviour, IUIWindow
     {
         certainAmount = (int)value;
         certainAmountText.text = certainAmount.ToString();
-        targetFactory.ChangeRequestedAmount(certainAmount, targetCondition.requiredResource);
+        targetFactory.ChangeRequestedAmount(certainAmount, targetCondition.requiredResource.Type);
     }
     private void CloseWindowRequest()
     {

@@ -44,7 +44,7 @@ public class GameOverManager : MonoBehaviour
 
     private void Bankruptcy()
     {
-        UIManager.Instance.OpenWindow(gameOverController);
+        EventBusManager.Instance.WindowOpenRequested(gameOverController);
         EventBusManager.Instance.GameOver("Bankruptcy");
     }
 }

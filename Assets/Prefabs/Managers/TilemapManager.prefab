@@ -45,5 +45,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   groundTilemap: {fileID: 0}
-  resourceTilemap: {fileID: 0}
-  obstacleTilemap: {fileID: 0}
+  surfaceResourcesTilemap: {fileID: 0}
+  undergroundResourcesTilemap: {fileID: 0}
+  buildingTilemap: {fileID: 0}

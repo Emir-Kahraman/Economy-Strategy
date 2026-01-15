@@ -5,8 +5,8 @@ TagManager:
   serializedVersion: 3
   tags:
   - Buildings Tilemap
-  - Resources Tilemap
   - Ground Tilemap
+  - Resources Tilemap
   layers:
   - Default
   - TransparentFX
@@ -47,7 +47,10 @@ TagManager:
   - name: Ground
     uniqueID: 402693275
     locked: 0
-  - name: Resources
+  - name: Underground Resources
+    uniqueID: 876148901
+    locked: 0
+  - name: Surface Resources
     uniqueID: 3351956919
     locked: 0
   - name: Buildings

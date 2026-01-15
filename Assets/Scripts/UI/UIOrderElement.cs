@@ -80,7 +80,7 @@ public class UIOrderElement : MonoBehaviour
     }
     private void CompleteOrder()
     {
-        CurrencyManager.Instance.AddMoney(rewardAmount);
+        EventBusManager.Instance.OrderCompleted(resourceData, rewardAmount);
         DeleteOrder();
     }
     private void FailedOrder()

@@ -46,5 +46,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   isBuildable: 1
   isResource: 1
-  isDestructibleResource: 1
+  isDestructible: 1
   resourceType: 2

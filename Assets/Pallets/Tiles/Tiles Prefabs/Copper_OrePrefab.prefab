@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &8156184065030911876
+--- !u!1 &4032718574103953303
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,58 +8,43 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 7301952845159790569}
-  - component: {fileID: 3139698380349723563}
-  - component: {fileID: 4570844783945548318}
+  - component: {fileID: 6383872464907911369}
+  - component: {fileID: 973488712040888755}
   m_Layer: 0
-  m_Name: SmallWorkerHousingPrefab
+  m_Name: Copper_OrePrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &7301952845159790569
+--- !u!4 &6383872464907911369
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8156184065030911876}
+  m_GameObject: {fileID: 4032718574103953303}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 381.21997, y: 86.33472, z: -0.41729566}
+  m_LocalPosition: {x: -4.1781034, y: 6.0920587, z: 9.967221}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &3139698380349723563
+--- !u!114 &973488712040888755
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8156184065030911876}
+  m_GameObject: {fileID: 4032718574103953303}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 3e44aa9bdf88b084db694df01c57b52d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   isBuildable: 1
-  isResource: 0
+  isResource: 1
   isDestructibleResource: 0
-  resourceType: 0
---- !u!114 &4570844783945548318
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8156184065030911876}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b8fee408958a1f548b27557cc11a9d88, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  capacity: 20
-  serviceCost: 10
+  resourceType: 6

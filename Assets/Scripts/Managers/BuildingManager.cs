@@ -2,10 +2,8 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.Tilemaps;
 using System.Collections.Generic;
-using System;
 using System.Linq;
-using Unity.VisualScripting;
-
+using UnityEditor;
 
 public class BuildingManager : MonoBehaviour
 {
@@ -29,26 +27,41 @@ public class BuildingManager : MonoBehaviour
 
     private Dictionary<Vector3Int, BuildingRecord> buildingRegistry = new();
 
+    public BuildingManagerData GetBuildingManagerData()
+    {
+        BuildingManagerData data = new BuildingManagerData
+        {
+            buildingRecordDataList = buildingRegistry.Values.Select(record => new BuildingManagerData.BuildingRecordData
+            {
+                buildingDataKey = record.data.BuildingKey,
+                startCell = new SerializableVector3Int(record.startCell.x, record.startCell.y, record.startCell.z),
+                occupiedCells = record.occupiedCells.Select(cell => new SerializableVector3Int(cell.x, cell.y, cell.z)).ToList()
+            }).ToList()
+        };
+        return data;
+    }
+
     private void Awake()
     {
         Initialize();
     }
+    private void OnDestroy()
+    {
+        UninitializeEvents();
+    }
+
     private void Initialize()
     {
         InitializeSingleton();
         InitializeObjects();
         InitializeEvents();
-    }
-    private void OnDestroy()
-    {
-        UninitializeEvents();
+        IsLoadLevelFromSave();
     }
     private void InitializeSingleton()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
 
-        DontDestroyOnLoad(gameObject);
         gameObject.name = "BuildingManager";
     }
     private void InitializeObjects()
@@ -64,6 +77,29 @@ public class BuildingManager : MonoBehaviour
     private void UninitializeEvents()
     {
         
+    }
+    private void IsLoadLevelFromSave()
+    {
+        if (SaveManager.Instance.IsLoadLevelFromSave)
+        {
+            LoadBuildingManagerData(SaveManager.Instance.LoadedLevelDates);
+        }
+    }
+    private void LoadBuildingManagerData(GameSessionData gameSessionData)
+    {
+        BuildingManagerData data = gameSessionData.buildingManagerData;
+        buildingRegistry.Clear();
+        foreach (var recordData in data.buildingRecordDataList)
+        {
+            BuildingData buildingData = BuildingLibrary.GetBuilding(recordData.buildingDataKey);
+            if (buildingData == null)
+            {
+                Debug.LogWarning($"Building with ID {recordData.buildingDataKey} not found in BuildingLibrary. Skipping.");
+                continue;
+            }
+
+            RegisterBuilding(recordData.startCell.ToVector3Int(), buildingData);
+        }
     }
 
     private void Start()
@@ -143,6 +179,8 @@ public class BuildingManager : MonoBehaviour
             {
                 EventBusManager.Instance.BuildingBuilt(cell, currentBuilding);
                 RegisterBuilding(cell, currentBuilding);
+                ProductionFactory factory = currentBuilding.BuildingObject.GetComponent<ProductionFactory>();
+                    
             }
         }
     }
@@ -170,7 +208,6 @@ public class BuildingManager : MonoBehaviour
     {
         Vector3Int cellPos = MouseToCellPositionOfGroundTilemap();
         bool IsDemolitionCell = FindDemolitionCell(cellPos, out TileData demolitionCell);
-        Debug.Log(IsDemolitionCell);
         UpdateDemolitionHighlight(cellPos, IsDemolitionCell);
 
         if (Input.GetMouseButtonDown(0) && IsDemolitionCell && !EventSystem.current.IsPointerOverGameObject())
@@ -235,9 +272,9 @@ public class BuildingManager : MonoBehaviour
     }
     private void DemolishAt(Vector3Int cell)
     {
-        if(TryGetBuildingDataAt(cell, out BuildingData building, out Vector3Int startCell))
+        if (TryGetBuildingDataAt(cell, out BuildingData building, out Vector3Int startCell))
         {
-            EventBusManager.Instance.BuildingDelete(cell, building);
+            EventBusManager.Instance.BuildingDelete(startCell, building);
 
             BuildingRecord record = buildingRegistry[startCell];
             foreach (Vector3Int tilePos in record.occupiedCells)
@@ -266,12 +303,10 @@ public class BuildingManager : MonoBehaviour
     {
         if (GetTilemapFromTilemapManager(TilemapType.Resources).GetTile(cell))
         {
-            Debug.Log("Имеется Ресурс на Клетке!");
             return false;
         }
         else if (GetTilemapFromTilemapManager(TilemapType.Buildings).GetTile(cell))
         {
-            Debug.Log("Имеется Здание на Клетке!");
             return false;
         }
         else
@@ -280,7 +315,7 @@ public class BuildingManager : MonoBehaviour
         }
     }
 
-    private void DeleteResourceTile(Vector3Int cell)//Вызывается при любых удалениях и изменениях, без проверки на действительные изменение ресурсного тайла - костыльно, требуется доработка.
+    private void DeleteResourceTile(Vector3Int cell)
     {
         EventBusManager.Instance.ResourceDeleted(cell);
     }

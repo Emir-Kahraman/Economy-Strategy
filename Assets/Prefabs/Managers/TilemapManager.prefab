@@ -44,7 +44,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c6d5ff52ca270644297a49983cb7d22f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  runtimeData: {fileID: 11400000, guid: 8c6d84204b860dd4388a1a0139972625, type: 2}
   groundTilemap: {fileID: 0}
-  surfaceResourcesTilemap: {fileID: 0}
-  undergroundResourcesTilemap: {fileID: 0}
+  resourcesTilemap: {fileID: 0}
   buildingTilemap: {fileID: 0}
+  worldGeneratorPrefab: {fileID: 8832040224499014253, guid: ccdbfc9c6e459d548bb6f8cf680d90e5, type: 3}
+  waterTile: {fileID: 11400000, guid: f3cd17147d943e7489157d5f1c098d22, type: 2}
+  sandTile: {fileID: 11400000, guid: e9b2360e605d6b2408f009d9b656470d, type: 2}
+  mountainTile: {fileID: 11400000, guid: 30268a809a363a047be0a3e5c4199562, type: 2}
+  earthTile: {fileID: 11400000, guid: 6b2c08baaff9ba244a3524b00a38c1c8, type: 2}
+  riverTile: {fileID: 11400000, guid: df16c1f1536700e4d86e31a3022f1907, type: 2}
+  riverMouthUpTile: {fileID: 11400000, guid: 33b4190c2a7682d46a51a365dab0b703, type: 2}
+  riverMouthDownTile: {fileID: 11400000, guid: cdd4944af4ee630478092fca9bf66895, type: 2}
+  riverMouthLeftTile: {fileID: 11400000, guid: 8c76416daea979940a0285c16c833bca, type: 2}
+  riverMouthRightTile: {fileID: 11400000, guid: 53bd7a6d4bfb46b4a9da2bb5531d51c3, type: 2}
+  forestTile: {fileID: 11400000, guid: 2aa0575d097ec474499a1e2bb7e682bd, type: 2}
+  oakTreeTile: {fileID: 11400000, guid: 99fc25c42b1c83447aa34f23b3aaa1ba, type: 2}
+  ebonyTreeTile: {fileID: 11400000, guid: 997502d4577d32b408591e709f7c8764, type: 2}
+  stoneTile: {fileID: 11400000, guid: 7dfcc6749b17fe24b83e22ea552b4466, type: 2}
+  iron_VeinTile: {fileID: 11400000, guid: 723c1b25061fb6849b130cbc01dd641f, type: 2}
+  copper_VeinTile: {fileID: 11400000, guid: 3e265ce05deb5454799d7a6569c14b7d, type: 2}
+  silver_VeinTile: {fileID: 11400000, guid: dc0dc9fbbdf803f47ab85b29bc732111, type: 2}
+  gold_VeinTile: {fileID: 11400000, guid: 482be7f43b9bdff4b97689329bcb3856, type: 2}
+  fish_ShoalTile: {fileID: 11400000, guid: f860cfb9b0fa95d4ca12614a64dc16b9, type: 2}
+  pearlReefTile: {fileID: 11400000, guid: 3920b719646dbd443b3bc7e510916208, type: 2}

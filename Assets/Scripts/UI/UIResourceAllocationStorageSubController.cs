@@ -24,6 +24,19 @@ public class UIResourceAllocationStorageSubController : MonoBehaviour, IUIWindow
         InitializeObjects();
         CloseWindow();
     }
+    public void Uninitialize()
+    {
+        UninitializeButtons();
+        UninitializeObjects();
+    }
+    private void UninitializeButtons()
+    {
+        closeButton.onClick.RemoveAllListeners();
+    }
+    private void UninitializeObjects()
+    {
+        certainAmountSlider.onValueChanged.RemoveAllListeners();
+    }
     private void InitializeButtons()
     {
         closeButton.onClick.AddListener(CloseWindowRequest);

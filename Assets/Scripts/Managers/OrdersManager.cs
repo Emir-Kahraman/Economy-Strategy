@@ -2,31 +2,30 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.InteropServices.WindowsRuntime;
-using UnityEditor.UI;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 public class OrdersManager : MonoBehaviour
 {
     public static OrdersManager Instance;
+    [SerializeField] private CurrentLevelRuntimeData currentLevelRuntimeData;
 
     private bool _bankruptcy = false;
 
+    [Header("Base Orders Parameters")]
     [SerializeField] private float baseExistenceTime;
     [SerializeField] private float baseCompletionTime;
     [SerializeField] private int baseResourceAmount;
     [SerializeField] private float baseOrderSpawnTimer;
     [SerializeField] private int maxActiveOrders;
     [SerializeField] private float increaseValue;
-    [SerializeField] private Period currentPeriod;
-    [Header("Level Parameters")]
-    [SerializeField] private Period maxPeriod;
-    [SerializeField] private int timerToIIPeriod;
-    [SerializeField] private int timerToIIIPeriod;
-    [SerializeField] private int timerToIVPeriod;
-    
+
+    private Period currentPeriod;
+    private Period maxPeriod;
+    private int timerToIIPeriod;
+    private int timerToIIIPeriod;
+    private int timerToIVPeriod;
     private float orderSpawnTimer;
-    
     private int activeOrdersCount;
     private int maxAcceptedOrders = 8;
     private int acceptedOrdersCount;
@@ -36,9 +35,59 @@ public class OrdersManager : MonoBehaviour
 
     private Coroutine increaseDemand;
 
-    private List<ResourceData> resourceDates = new();
     private List<ResourceData> availableResources = new();
     private Dictionary<ResourceData, float> resourceDemand = new();
+
+    public Period GetPeriod => currentPeriod;
+
+    UIOrdersMenuController ordersMenuController;
+
+    public OrdersManagerData GetOrdersManagerData()
+    {
+        var data = new OrdersManagerData();
+        data.currentPeriod = currentPeriod.ToString();
+
+        foreach (var kvp in resourceDemand)
+        {
+            var entry = new OrdersManagerData.ResourceDemandEntry(kvp.Key.Key, kvp.Value);
+            data.resourceDemand.Add(entry);
+        }
+
+        ordersMenuController = FindAnyObjectByType<UIOrdersMenuController>();
+        var acceptedOrders = ordersMenuController.GetAcceptedOrders();
+        foreach (var kvp in acceptedOrders)
+        {
+            OrderData orderData = kvp.GetOrderData();
+            OrdersManagerData.OrderSaveData saveData = new OrdersManagerData.OrderSaveData
+            (
+                orderData.id,
+                orderData.resourceData.Key,
+                orderData.existenceTime,
+                orderData.completionTime,
+                orderData.resourceAmount,
+                orderData.reward
+            );
+            data.acceptedOrders.Add(saveData);
+        }
+
+        var activeOrders = ordersMenuController.GetActiveOrders();
+        foreach (var kvp in activeOrders)
+        {
+            OrderData orderData = kvp.GetOrderData();
+            OrdersManagerData.OrderSaveData saveData = new OrdersManagerData.OrderSaveData
+            (
+                orderData.id,
+                orderData.resourceData.Key,
+                orderData.existenceTime,
+                orderData.completionTime,
+                orderData.resourceAmount,
+                orderData.reward
+            );
+            data.activeOrders.Add(saveData);
+        }
+
+        return data;
+    }
 
     private void Awake()
     {
@@ -51,20 +100,35 @@ public class OrdersManager : MonoBehaviour
     private void Initialize()
     {
         InitializeSingleton();
+        InitializeLevelParameters();
         InitializeEvents();
+        IsLevelLoadFromSave();
     }
     private void InitializeSingleton()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
 
-        DontDestroyOnLoad(gameObject);
         gameObject.name = "OrdersManager";
+    }
+    private void InitializeLevelParameters()
+    {
+        if (currentLevelRuntimeData != null && currentLevelRuntimeData.levelData != null)
+        {
+            currentPeriod = currentLevelRuntimeData.levelData.periodParameters.startPeriod;
+            maxPeriod = currentLevelRuntimeData.levelData.periodParameters.endPeriod;
+            timerToIIPeriod = currentLevelRuntimeData.levelData.periodParameters.timerToIIPeriod;
+            timerToIIIPeriod = currentLevelRuntimeData.levelData.periodParameters.timerToIIIPeriod;
+            timerToIVPeriod = currentLevelRuntimeData.levelData.periodParameters.timerToIVPeriod;
+        }
+        else
+        {
+            Debug.LogError("CurrentLevelRuntimeData or LevelData is not assigned in OrdersManager.");
+        }
     }
     private void InitializeEvents()
     {
         EventBusManager.Instance.OnBankruptcy += Bankruptcy;
-        EventBusManager.Instance.OnResourceDataUpdated += SetResourceDates;
         EventBusManager.Instance.OnOrderAccepted += AcceptOrder;
         EventBusManager.Instance.OnOrderExpired += DeleteOrder;
         EventBusManager.Instance.OnOrderCompleted += OrderCompleted;
@@ -72,37 +136,57 @@ public class OrdersManager : MonoBehaviour
     private void UninitializeEvents()
     {
         EventBusManager.Instance.OnBankruptcy -= Bankruptcy;
-        EventBusManager.Instance.OnResourceDataUpdated -= SetResourceDates;
         EventBusManager.Instance.OnOrderAccepted -= AcceptOrder;
         EventBusManager.Instance.OnOrderExpired -= DeleteOrder;
         EventBusManager.Instance.OnOrderCompleted -= OrderCompleted;
     }
-    
+    private void IsLevelLoadFromSave()
+    {
+        if (SaveManager.Instance.IsLoadLevelFromSave)
+        {
+            LoadOrdersManagerData(SaveManager.Instance.LoadedLevelDates);
+        }
+    }
+    private void LoadOrdersManagerData(GameSessionData sessionData)
+    {
+        OrdersManagerData data = sessionData.ordersManagerData;
+        currentPeriod = (Period)Enum.Parse(typeof(Period), data.currentPeriod);
+
+        resourceDemand.Clear();
+        foreach (var entry in data.resourceDemand)
+        {
+            ResourceData resourceData = entry.GetResourceData();
+            if (resourceData != null)
+                resourceDemand[resourceData] = entry.demand;
+            else
+                Debug.LogWarning($"Resource '{entry.resourceName}' not found. Skipping demand entry.");
+        }
+
+        List<OrderData> acceptedOrders = new List<OrderData>();
+        foreach (var orderSaveData in data.acceptedOrders)
+        {
+            OrderData orderData = orderSaveData.ToOrderData();
+            acceptedOrders.Add(orderData);
+        }
+        EventBusManager.Instance.OrdersLoadedFromSave(acceptedOrders, true);
+
+        List<OrderData> activeOrders = new List<OrderData>();
+        foreach (var orderSaveData in data.activeOrders)
+        {
+            OrderData orderData = orderSaveData.ToOrderData();
+            activeOrders.Add(orderData);
+        }
+        EventBusManager.Instance.OrdersLoadedFromSave(activeOrders, false);
+    }
+
     private void Bankruptcy()
     {
         _bankruptcy = true;
     }
 
-    private void SetResourceDates(List<ResourceData> dates)
-    {
-        resourceDates = dates;
-        UpdateAvailableResource();
-    }
-
-    private void UpdateAvailableResource()
-    {
-        availableResources = resourceDates.Where(resource => IsPeriodAllowed(resource.Period) && resource.CanBeOrdered).ToList();
-        foreach (var resource in availableResources)
-        {
-            if (!resourceDemand.ContainsKey(resource))
-            {
-                resourceDemand[resource] = 1;
-            }
-        }
-    }
-
     private void Start()
     {
+        UpdateAvailableResource();
         SetPeriodTimer();
         EventBusManager.Instance.CurrentPeriodUpdated(currentPeriod);
 
@@ -111,6 +195,17 @@ public class OrdersManager : MonoBehaviour
             increaseDemand = StartCoroutine(IncreaseDemand());
         }
         else StopCoroutine(increaseDemand);
+    }
+    private void UpdateAvailableResource()
+    {
+        availableResources = ResourceLibrary.GetAllResources().Where(resource => IsPeriodAllowed(resource.Period) && resource.CanBeOrdered).ToList();
+        foreach (var resource in availableResources)
+        {
+            if (!resourceDemand.ContainsKey(resource))
+            {
+                resourceDemand[resource] = 1;
+            }
+        }
     }
 
     private void SetPeriodTimer()
@@ -124,7 +219,7 @@ public class OrdersManager : MonoBehaviour
         }
     }
 
-
+    
     private void Update()
     {
         if (_bankruptcy) return;
@@ -136,10 +231,6 @@ public class OrdersManager : MonoBehaviour
     {
         while (true)
         {
-            foreach (var resource in resourceDemand.Keys)
-            {
-                Debug.Log(resource.Type + "/" + resourceDemand[resource]);
-            }
             yield return new WaitForSeconds(1f);
 
             increaseValue *= Time.deltaTime;
@@ -159,6 +250,12 @@ public class OrdersManager : MonoBehaviour
     {
         if ((int)currentPeriod >= (int)maxPeriod) return;
         timeToNewPeriod -= Time.deltaTime;
+        switch (currentPeriod)
+        {
+            case Period.I: EventBusManager.Instance.PeriodTimerUpdated(timeToNewPeriod, timerToIIPeriod); break;
+            case Period.II: EventBusManager.Instance.PeriodTimerUpdated(timeToNewPeriod, timerToIIIPeriod); break;
+            case Period.III: EventBusManager.Instance.PeriodTimerUpdated(timeToNewPeriod, timerToIVPeriod); break;
+        }
         if (timeToNewPeriod <= 0)
         {
             UpdatePeriod();
@@ -226,7 +323,19 @@ public class OrdersManager : MonoBehaviour
                 return kvp.Key;
             }
         }
-        return availableResources.Last();
+        if (availableResources.Count == 0)
+        {
+            UpdateAvailableResource();
+        }
+        try 
+        {
+            return availableResources.Last();
+        }
+        catch (Exception ex)
+        {
+            Debug.LogError("Error selecting resource: " + ex.Message);
+            return null;
+        }
     }
     private bool IsPeriodAllowed(Period resourcePeriod)
     {

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System;
 using Unity.VisualScripting;
 using System.Linq;
+using UnityEngine.Rendering.Universal;
 
 public class UIStorageMenuController : MonoBehaviour, IUIWindow
 {
@@ -16,23 +17,45 @@ public class UIStorageMenuController : MonoBehaviour, IUIWindow
     [SerializeField] private GameObject storageElementsParent;
     [SerializeField] private Button menuButton;
 
-    private List<ResourceData> allResources;
+    private List<ResourceData> allResources = new();
     private Dictionary<ResourceType, UIStorageElement> storageElements = new();
 
     private float currentVolume;
     private float totalCapacity;
 
-    private float volumeUpdaterTimer = 1f;
-
     public void Initialize()
     {
         InitializeButtons();
+        InitializeUIElements();
         InitializeEvents();
         CloseWindow();
     }
-    private void OnDestroy()
+    public void Uninitialize()
     {
+        UninitializeButtons();
+        UninitializeUIElements();
         UninitializeEvents();
+    }
+    private void UninitializeButtons()
+    {
+        closeButton.onClick.RemoveAllListeners();
+    }
+    private void UninitializeUIElements()
+    {
+        ClearAllDates();
+    }
+    private void ClearAllDates()
+    {
+        foreach (var element in storageElements)
+        {
+            if (element.Value != null)
+            {
+                GameObject elementGO = element.Value.gameObject;
+                Destroy(elementGO);
+            }
+        }
+        storageElements.Clear();
+        allResources.Clear();
     }
     private void InitializeButtons()
     {
@@ -40,20 +63,18 @@ public class UIStorageMenuController : MonoBehaviour, IUIWindow
     }
     private void InitializeUIElements()
     {
-        storageVolumeSlider.maxValue = totalCapacity;
-
         UpdateUIElements();
     }
     private void InitializeEvents()
     {
         EventBusManager.Instance.OnResourceDataUpdated += SetResourceDates;
-        EventBusManager.Instance.OnResourceUpdated += UpdateResourcesAmount;
+        EventBusManager.Instance.OnResourceAmountUpdated += UpdateResourcesAmount;
         EventBusManager.Instance.OnStorageCapacityUpdated += UpdateStorageCapacity;
     }
     private void UninitializeEvents()
     {
         EventBusManager.Instance.OnResourceDataUpdated -= SetResourceDates;
-        EventBusManager.Instance.OnResourceUpdated -= UpdateResourcesAmount;
+        EventBusManager.Instance.OnResourceAmountUpdated -= UpdateResourcesAmount;
         EventBusManager.Instance.OnStorageCapacityUpdated -= UpdateStorageCapacity;
     }
 
@@ -93,13 +114,11 @@ public class UIStorageMenuController : MonoBehaviour, IUIWindow
 
     private void UpdateResourcesAmount(ResourceType type, int newAmount)
     {
-        foreach (ResourceType element in storageElements.Keys)
+        
+        if (storageElements.ContainsKey(type))
         {
-            if (element == type)
-            {
-                storageElements[element].SetAmount(newAmount);
-                UpdateConditionElementStatus(type, newAmount);
-            }
+            storageElements[type].SetAmount(newAmount);
+            UpdateConditionElementStatus(type, newAmount);
         }
     }
 
@@ -113,32 +132,28 @@ public class UIStorageMenuController : MonoBehaviour, IUIWindow
     {
         totalCapacity = newTotalCapacity;
         storageVolumeSlider.maxValue = totalCapacity;
-        InitializeUIElements();
+        UpdateUIElements();
     }
+
     private void Update()
     {
         UpdateCurrentVolume();
     }
-
     private void UpdateCurrentVolume()
     {
-        volumeUpdaterTimer -= Time.deltaTime;
-        if (volumeUpdaterTimer < 0)
+        float volumeOfResources = 0f;
+        foreach (var element in storageElements.Keys)
         {
-            float volumeOfResources = 0f;
-            foreach (var element in storageElements.Keys)
-            {
-                volumeOfResources += storageElements[element].GetCurrentVolume();
-            }
-            currentVolume = volumeOfResources;
-
-            UpdateUIElements();
-
-            volumeUpdaterTimer = 1f;
+            volumeOfResources += storageElements[element].GetCurrentVolume();
         }
+        currentVolume = volumeOfResources;
+
+        UpdateUIElements();
     }
+
     private void UpdateUIElements()
     {
+        storageVolumeSlider.maxValue = totalCapacity;
         storageVolumeText.text = $"{currentVolume} / {totalCapacity}";
         storageVolumeSlider.value = currentVolume;
     }

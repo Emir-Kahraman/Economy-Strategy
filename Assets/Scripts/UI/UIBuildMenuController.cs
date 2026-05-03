@@ -1,17 +1,13 @@
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
-using UnityEngine.Rendering;
 using System;
-using UnityEditor.Build.Reporting;
 using TMPro;
 using System.Linq;
 
 public class UIBuildMenuController : MonoBehaviour, IUIWindow
 {
-    
-    
-    [Header("������")]
+    [Header("Ссылки")]
     [SerializeField] private GameObject targetWindow;
     [SerializeField] private Button enterDemolitionModeButton;
     [SerializeField] private Button enterObservationModeButton;
@@ -38,14 +34,45 @@ public class UIBuildMenuController : MonoBehaviour, IUIWindow
 
     public void Initialize()
     {
+        ClearButtonCollections(typeButtons);
+        ClearButtonCollections(lockedBuildingButtons);
+        ClearButtonCollections(unlockedBuildingButtons);
+        
         InitializeButtons();        
         InitializeMenuSettings();
         InitializeEvents();
     }
-    private void OnDestroy()
+    public void Uninitialize()
     {
+        UninitializeButtons();
         UninitializeEvents();
+        
+        ClearButtonCollections(typeButtons);
+        ClearButtonCollections(lockedBuildingButtons);
+        ClearButtonCollections(unlockedBuildingButtons);
     }
+    private void UninitializeButtons()
+    {
+        UninitializeUIButtons();
+        UninitializeBuildingsTypeButtons();
+    }
+    private void UninitializeUIButtons()
+    {
+        closeButton.onClick.RemoveAllListeners();
+        enterObservationModeButton.onClick.RemoveAllListeners();
+        enterDemolitionModeButton.onClick.RemoveAllListeners();
+    }
+    private void UninitializeBuildingsTypeButtons()
+    {
+        // ★ Очищаем слушатели перед удалением кнопок
+        foreach (var button in typeButtons)
+        {
+            if (button != null)
+                button.onClick.RemoveAllListeners();
+        }
+        ClearButtonCollections(typeButtons);
+    }
+
     private void InitializeButtons()
     {
         InitializeUIButtons();
@@ -76,7 +103,7 @@ public class UIBuildMenuController : MonoBehaviour, IUIWindow
     }
     private void InitializeMenuSettings()
     {
-        ShowBuildingsByType(0);
+        currentType = BuildingCategory.Food;
         CloseWindow();
     }
     private void InitializeEvents()
@@ -95,7 +122,8 @@ public class UIBuildMenuController : MonoBehaviour, IUIWindow
     private void SetBuildingDates(List<BuildingData> buildings)
     {
         allBuildings = buildings;
-
+        ClearButtonCollections(lockedBuildingButtons);
+        ClearButtonCollections(unlockedBuildingButtons);
         foreach (BuildingData data in allBuildings)
         {
             GameObject buttonObj = Instantiate(buildingButtonPrefab, buildingsContent);
@@ -105,6 +133,33 @@ public class UIBuildMenuController : MonoBehaviour, IUIWindow
             lockedBuildingButtons[data] = button;
             button.SetVisible(false);
         }
+    }
+    private void ClearButtonCollections<T>(List<T> buttonList) where T : MonoBehaviour
+    {
+        if (buttonList == null) return;
+
+        for (int i = 0; i < buttonList.Count; i++)
+        {
+            T button = buttonList[i];
+            if (button != null && button.gameObject != null)
+            {
+                Destroy(button.gameObject);
+            }
+        }
+        buttonList.Clear();
+    }
+    private void ClearButtonCollections<TKey, TValue>(Dictionary<TKey, TValue> buttonDict) where TValue : MonoBehaviour
+    {
+        if (buttonDict == null) return;
+        var keys = buttonDict.Keys.ToList();
+        foreach (var key in keys)
+        {
+            if (buttonDict.TryGetValue(key, out TValue button) && button != null && button.gameObject != null)
+            {
+                Destroy(button.gameObject);
+            }
+        }
+        buttonDict.Clear();
     }
 
     private void CurrentPeriodUpdated(Period period)
@@ -167,11 +222,11 @@ public class UIBuildMenuController : MonoBehaviour, IUIWindow
     {
         switch (type)
         {
-            case BuildingCategory.Food: return "Food";
-            case BuildingCategory.Cloth: return "Cloth";
-            case BuildingCategory.Arrangement: return "Arrangement";
-            case BuildingCategory.Household: return "Household";
-            default: return "Others";
+            case BuildingCategory.Food: return "<Food>";
+            case BuildingCategory.Cloth: return "<Cloth>";
+            case BuildingCategory.Arrangement: return "<Arrangement>";
+            case BuildingCategory.Household: return "<Household>";
+            default: return "<Others>";
         }
     }
 

@@ -7,9 +7,8 @@ public class EventBusManager : MonoBehaviour
     public static EventBusManager Instance;
     public event Action OnBankruptcy;
     public event Action<float> OnBankruptcyProcess;
-    public event Action<string> OnGameOver;
     public event Action<int> OnMoneyChanged;
-    public event Action<ResourceType, int> OnResourceUpdated;
+    public event Action<ResourceType, int> OnResourceAmountUpdated;
     public event Action<float> OnStorageCapacityUpdated;
     public event Action<float> OnStorageBuilt;
     public event Action<List<ResourceData>> OnResourceDataUpdated;
@@ -35,6 +34,28 @@ public class EventBusManager : MonoBehaviour
     public event Action<Vector3Int, BuildingData> OnBuildingDeleted;
     public event Action<Period> OnCurrentPeriodUpdated;
     public event Action<ResourceData, int> OnOrderCompleted;
+    public event Action<Vector3Int, TerrainType> OnCreateGroundTile;
+    public event Action<Vector3Int, ResourceType> OnCreateResourceTile;
+    public event Action<Vector3Int, Vector2Int> OnCreateRiverMouthTile;
+    public event Action<int> OnAllQuestsCompleted;
+    public event Action<int> OnLevelCompleted;
+    public event Action<ProgressData> OnGameProgressChanged;
+    public event Action OnResetGameProgress;
+    public event Action OnRequestLevelProgressSave;
+    public event Action<List<OrderData>, bool> OnOrdersLoadedFromSave;
+    public event Action<string> OnOrderAccept;
+    public event Action<ProductionFactory> OnProductionFactoryBuilt;
+    public event Action<ProductionFactory> OnProductionFactoryDeleted;
+    public event Action<float, float> OnPeriodTimerUpdated;
+    public event Action<BuildingData> OnBuildingForBuiltSelected;
+    public event Action<GameModeManager.GameMode> OnGameModeChanged;
+    public event Action<QuestData> OnQuestProgressChanged;
+    public event Action OnLanguageChanged;
+    public event Action<SystemLanguage> OnLanguageSeleceted;
+    public event Action<bool> OnMusicToggled;
+    public event Action<bool> OnSoundToggled;
+    public event Action OnLevelRestart;
+
 
     private void Awake()
     {
@@ -51,9 +72,8 @@ public class EventBusManager : MonoBehaviour
 
     public void Bankruptcy() => OnBankruptcy?.Invoke();
     public void BankruptcyProcess(float value) => OnBankruptcyProcess?.Invoke(value);
-    public void GameOver(string cause) => OnGameOver?.Invoke(cause);
     public void MoneyChanged(int value) => OnMoneyChanged?.Invoke(value);
-    public void ResourceUpdated(ResourceType type, int value) => OnResourceUpdated?.Invoke(type, value);
+    public void ResourceAmountUpdated(ResourceType type, int value) => OnResourceAmountUpdated?.Invoke(type, value);
     public void StorageCapacityUpdated(float value) => OnStorageCapacityUpdated?.Invoke(value);
     public void StorageBuilt(float value) => OnStorageBuilt?.Invoke(value);
     public void ResourceDataUpdated(List<ResourceData> resourceData) => OnResourceDataUpdated?.Invoke(resourceData);
@@ -79,4 +99,25 @@ public class EventBusManager : MonoBehaviour
     public void BuildingDelete(Vector3Int startCell, BuildingData data) => OnBuildingDeleted?.Invoke(startCell, data);
     public void CurrentPeriodUpdated(Period period) => OnCurrentPeriodUpdated?.Invoke(period);
     public void OrderCompleted(ResourceData resource, int reward) => OnOrderCompleted?.Invoke(resource, reward);
+    public void CreateGroundTile(Vector3Int cell, TerrainType terrain) => OnCreateGroundTile?.Invoke(cell, terrain);
+    public void CreateResourceTile(Vector3Int cell, ResourceType type) => OnCreateResourceTile?.Invoke(cell, type);
+    public void CreateRiverMouthTile(Vector3Int cell, Vector2Int direction) => OnCreateRiverMouthTile?.Invoke(cell, direction);
+    public void AllQuestsCompleted(int levelIndex) => OnAllQuestsCompleted?.Invoke(levelIndex);
+    public void LevelCompleted(int levelIndex) => OnLevelCompleted?.Invoke(levelIndex);
+    public void ProgressChanged(ProgressData progress) => OnGameProgressChanged?.Invoke(progress);
+    public void ResetGameProgress() => OnResetGameProgress?.Invoke();
+    public void RequestLevelProgressSave() => OnRequestLevelProgressSave?.Invoke();
+    public void OrdersLoadedFromSave(List<OrderData> orders, bool isAcceptedOrders) => OnOrdersLoadedFromSave?.Invoke(orders, isAcceptedOrders);
+    public void OrderAccept(string orderId) => OnOrderAccept?.Invoke(orderId);
+    public void ProductionFactoryBuilt(ProductionFactory factory) => OnProductionFactoryBuilt?.Invoke(factory);
+    public void ProductionFactoryDeleted(ProductionFactory factory) => OnProductionFactoryDeleted?.Invoke(factory);
+    public void PeriodTimerUpdated(float currentTime, float maxTime) => OnPeriodTimerUpdated?.Invoke(currentTime, maxTime);
+    public void BuildingForBuiltSelected(BuildingData data) => OnBuildingForBuiltSelected?.Invoke(data);
+    public void GameModeChanged(GameModeManager.GameMode gameModeManager) => OnGameModeChanged?.Invoke(gameModeManager);
+    public void QuestProgressChanged(QuestData questData) => OnQuestProgressChanged?.Invoke(questData);
+    public void LanguageChanged() => OnLanguageChanged?.Invoke();
+    public void LanguageSelected(SystemLanguage lang) => OnLanguageSeleceted?.Invoke(lang);
+    public void MusicToggled(bool isEnabled) => OnMusicToggled?.Invoke(isEnabled);
+    public void SoundToggled(bool isEnabled) => OnSoundToggled?.Invoke(isEnabled);
+    public void LevelRestart() => OnLevelRestart?.Invoke();
 }

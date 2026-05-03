@@ -16,7 +16,7 @@ MonoBehaviour:
   Type: 1
   CanBeOrdered: 0
   Tile: {fileID: 0}
-  Name: Test
+  Key: Test
   Icon: {fileID: -8107158825473223733, guid: 8a04fa18ec1be5b4c80980a65e40e2ba, type: 3}
   VolumePerUnit: 2
   Price: 5

@@ -16,14 +16,8 @@ public enum BuildingCategory
 [CreateAssetMenu(fileName = "NewBuilding", menuName ="Building Data")]
 public class BuildingData : ScriptableObject
 {
-    [Serializable]
-    public class ResourceForBuild
-    {
-        public ResourceData Resource;
-        public int Amount;
-    }
-
-
+    [SerializeField] private const string category = "buildings";
+    public string BuildingKey;
     public GameObject BuildingObject;
     [Space]
     public Period Period;
@@ -42,4 +36,16 @@ public class BuildingData : ScriptableObject
     public BuildingCategory buildingCategory;
     [Space]
     public List<ResourceForBuild> resourcesForBuild = new();
+
+    public string GetLocalizedName()
+    {
+        return LocalizationManager.Instance.GetText(category, BuildingKey);
+    }
+
+    [Serializable]
+    public class ResourceForBuild
+    {
+        public ResourceData Resource;
+        public int Amount;
+    }
 }

@@ -1,0 +1,169 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &8832040224499014253
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 4270745439523950618}
+  - component: {fileID: 7438002835026873427}
+  m_Layer: 0
+  m_Name: WorldGenerator
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &4270745439523950618
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8832040224499014253}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 119.21649, y: 194.0833, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7438002835026873427
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8832040224499014253}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98be760c6eadbf341a7ae65244604158, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WorldManager
+  worldSettingsPrefabs:
+  - settingsName: Small World
+    width: 40
+    height: 40
+    noiseScale: 0.05
+    waterLevel: 0.3
+    sandThreshold: 0.05
+    mountainThreshold: 0.9
+    riverCount: 3
+    minRiverLength: 4
+    maxRiverLength: 8
+    riverChance: 0.6
+  - settingsName: Middle World
+    width: 70
+    height: 70
+    noiseScale: 0.07
+    waterLevel: 0.4
+    sandThreshold: 0.06
+    mountainThreshold: 0.85
+    riverCount: 6
+    minRiverLength: 6
+    maxRiverLength: 12
+    riverChance: 0.45
+  - settingsName: Big World
+    width: 100
+    height: 100
+    noiseScale: 0.05
+    waterLevel: 0.35
+    sandThreshold: 0.07
+    mountainThreshold: 0.8
+    riverCount: 8
+    minRiverLength: 8
+    maxRiverLength: 15
+    riverChance: 0.3
+  resourceSettingsPrefabs:
+  - settingsName: Small World
+    forestZoneThreshold: 0.55
+    forestNoiseScale: 0.3
+    treeDensity: 0.7
+    oakProbability: 0.04
+    ebonyProbability: 0.368
+    mountainResources:
+    - resourceType: 5
+      spawnProbability: 0.04
+      minSpawnValue: 4
+    - resourceType: 6
+      spawnProbability: 0.035
+      minSpawnValue: 4
+    - resourceType: 7
+      spawnProbability: 0.025
+      minSpawnValue: 3
+    - resourceType: 8
+      spawnProbability: 0.02
+      minSpawnValue: 2
+    - resourceType: 9
+      spawnProbability: 0.01
+      minSpawnValue: 1
+    coastalResources:
+    - resourceType: 10
+      spawnProbability: 0.075
+      minSpawnValue: 4
+    - resourceType: 11
+      spawnProbability: 0.02
+      minSpawnValue: 2
+  - settingsName: Middle World
+    forestZoneThreshold: 0.6
+    forestNoiseScale: 0.5
+    treeDensity: 0.65
+    oakProbability: 0.03
+    ebonyProbability: 0.01
+    mountainResources:
+    - resourceType: 5
+      spawnProbability: 0.04
+      minSpawnValue: 8
+    - resourceType: 6
+      spawnProbability: 0.035
+      minSpawnValue: 8
+    - resourceType: 7
+      spawnProbability: 0.025
+      minSpawnValue: 6
+    - resourceType: 8
+      spawnProbability: 0.02
+      minSpawnValue: 4
+    - resourceType: 9
+      spawnProbability: 0.01
+      minSpawnValue: 2
+    coastalResources:
+    - resourceType: 10
+      spawnProbability: 0.075
+      minSpawnValue: 8
+    - resourceType: 11
+      spawnProbability: 0.02
+      minSpawnValue: 4
+  - settingsName: Big World
+    forestZoneThreshold: 0.7
+    forestNoiseScale: 0.7
+    treeDensity: 0.6
+    oakProbability: 0.02
+    ebonyProbability: 0.005
+    mountainResources:
+    - resourceType: 5
+      spawnProbability: 0.04
+      minSpawnValue: 12
+    - resourceType: 6
+      spawnProbability: 0.035
+      minSpawnValue: 12
+    - resourceType: 7
+      spawnProbability: 0.025
+      minSpawnValue: 9
+    - resourceType: 8
+      spawnProbability: 0.02
+      minSpawnValue: 6
+    - resourceType: 9
+      spawnProbability: 0.01
+      minSpawnValue: 3
+    coastalResources:
+    - resourceType: 10
+      spawnProbability: 0.075
+      minSpawnValue: 12
+    - resourceType: 11
+      spawnProbability: 0.02
+      minSpawnValue: 6
+  seed: 0

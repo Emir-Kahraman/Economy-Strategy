@@ -1,0 +1,14 @@
+fileFormatVersion: 2
+guid: 8dcc18b8c7189f64896f12c222620306
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - m_DefaultSprite: {fileID: -988522768170226185, guid: 60a7436ecd16fda4ab32bc0497ad340d, type: 3}
+  - m_DefaultGameObject: {fileID: 4481216517924765449, guid: 174a28da130a207498ab289d55a213cc, type: 3}
+  - waterTile: {fileID: 11400000, guid: f3cd17147d943e7489157d5f1c098d22, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

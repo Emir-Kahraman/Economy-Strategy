@@ -2,55 +2,62 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 using System.Linq;
+using Unity.Collections;
 
 public enum Period { I = 1, II = 2, III = 3, IV = 4 }
-public enum ResourceType {None, Test, Forest, Stone_Ore, Wood, Stone, Copper_Ore}
+public enum ResourceType {None, Test, Forest, Oak_Tree, Ebony_Tree, Stone, Iron_Vein, Copper_Vein, Silver_Vein, Gold_Vein, Fish_Shoal, Pearl_Reef, Wood, Cobblestone}
 
 public class StorageManager : MonoBehaviour
 {
     public static StorageManager Instance;
-    [SerializeField] private List<ResourceData> allResources;
-    [SerializeField] private Dictionary<ResourceType, int> inventory = new();
+    [SerializeField] private CurrentLevelRuntimeData currentLevelRuntimeData;
+
     [SerializeField] private float baseStartCapacity = 100f;
-    [SerializeField] private float currentVolume;
-    [Serializable]
-    private class StartResources
-    {
-        public ResourceType type;
-        public int amount;
-    }
-    [SerializeField] private List<StartResources> startResources;
 
-
+    private Dictionary<ResourceType, int> inventory = new();
+    private float currentVolume;    
+    private float capacityForStorageBuildings;
     private float totalCapacity;
-    private Dictionary<ResourceType, ResourceData> resourceInfos = new();//Не все ресурсы могут быть иниализированы, нужно добавить для этого обработку
+    private List<ResourceData> allResources = new();
+    private Dictionary<ResourceType, ResourceData> resourceInfos = new();//По сути весь список находится в библиотеке ресурсов, но для удобства доступа к данным ресурсов при работе с инвентарем, я решил создать словарь, который будет хранить данные ресурсов по их типу.
+
     public int GetResourceCount(ResourceType type) => inventory.TryGetValue(type, out var count) ? count : 0;
     public float GetCurrentVolume() => currentVolume;
     public float GetTotalCapacity() => totalCapacity;
 
+    public StorageManagerData GetStorageManagerData()
+    {
+        return new StorageManagerData
+        {
+            inventory = inventory.Select(kvp => new StorageManagerData.ResourceEntry(kvp.Key.ToString(), kvp.Value)).ToList(),
+            capacityForStorageBuildings = capacityForStorageBuildings
+        };
+
+    }
     private void Awake()
     {
-        InitializeSingleton();
         Initialize();
     }
     private void OnDestroy()
     {
         UninitializeEvents();
     }
-    private void InitializeSingleton()
-    {
-        if(Instance == null) Instance = this;
-        else Destroy(gameObject);
-
-        DontDestroyOnLoad(gameObject);
-        gameObject.name = "StorageManager";
-    }
     private void Initialize()
     {
+        InitializeSingleton();
         InitializeInventory();
         InitializeResourceData();
         InitializeParameters();
+        InitializeLevelParameters();
         InitializeEvents();
+        IsLevelLoadFromSave();
+    }
+    private void InitializeSingleton()
+    {
+        if (Instance == null) Instance = this;
+        else Destroy(gameObject);
+
+        gameObject.name = "StorageManager";
     }
     private void InitializeInventory()
     {
@@ -61,6 +68,7 @@ public class StorageManager : MonoBehaviour
     }
     private void InitializeResourceData()
     {
+        allResources = ResourceLibrary.GetAllResources();
         foreach (ResourceType resource in Enum.GetValues(typeof(ResourceType)))
         {
             for (int i = 0; i < allResources.Count; i++)
@@ -73,6 +81,20 @@ public class StorageManager : MonoBehaviour
     {
         totalCapacity = baseStartCapacity;
     }
+    private void InitializeLevelParameters()
+    {
+        if (currentLevelRuntimeData != null && currentLevelRuntimeData.levelData != null)
+        {
+            foreach (var resource in currentLevelRuntimeData.levelData.startResources)
+            {
+                AddResource(resource.type, resource.amount);
+            }
+        }
+        else
+        {
+            Debug.LogError("CurrentLevelRuntimeData or its levelData is not assigned in the inspector.");
+        }
+    }
     private void InitializeEvents()
     {
         EventBusManager.Instance.OnStorageBuilt += UpdateStorageCapacity;
@@ -81,25 +103,52 @@ public class StorageManager : MonoBehaviour
     {
         EventBusManager.Instance.OnStorageBuilt -= UpdateStorageCapacity;
     }
+    private void IsLevelLoadFromSave()
+    {
+        if (SaveManager.Instance.IsLoadLevelFromSave)
+        {
+            LoadStorageManagerData(SaveManager.Instance.LoadedLevelDates);
+        }
+    }
+    private void LoadStorageManagerData(GameSessionData data)
+    {
+        StorageManagerData storageManagerData = data.storageManagerData;
+        Dictionary<ResourceType, int> dataInventory = storageManagerData.inventory.ToDictionary(entry => Enum.Parse<ResourceType>(entry.resourceType), entry => entry.amount);
+        LoadResourcesFromSave(dataInventory);
+        totalCapacity = baseStartCapacity + capacityForStorageBuildings;
+    }
+    private void LoadResourcesFromSave(Dictionary<ResourceType, int> dataInventory)
+    {
+        foreach (var resource in dataInventory)
+        {
+            inventory[resource.Key] = resource.Value;
+        }
+    }
 
     private void Start()
     {
         InvokeStartEvents();
-        AddStartResources();
     }
     private void InvokeStartEvents()
     {
         EventBusManager.Instance.ResourceDataUpdated(allResources);
+        foreach (var resource in inventory) EventBusManager.Instance.ResourceAmountUpdated(resource.Key, resource.Value);
         EventBusManager.Instance.StorageCapacityUpdated(totalCapacity);
     }
-    private void AddStartResources()
+
+    private void Update()
     {
-        for (int i = 0; i < startResources.Count; i++)
+        CurrentVolumeUpdate();
+    }
+    private void CurrentVolumeUpdate()
+    {
+        float volumeOfResources = 0;
+        foreach (var resource in inventory)
         {
-            var type = startResources[i].type;
-            var amount = startResources[i].amount;
-            AddResource(type, amount);
+            if (!resourceInfos.ContainsKey(resource.Key)) continue;
+            volumeOfResources += inventory[resource.Key] * resourceInfos[resource.Key].VolumePerUnit;
         }
+        currentVolume = volumeOfResources;
     }
 
     public bool AddResource(ResourceType type, int amount)
@@ -109,9 +158,8 @@ public class StorageManager : MonoBehaviour
         float addedVolume = info.VolumePerUnit * amount;
         if (currentVolume + addedVolume > totalCapacity) return false;
 
-        currentVolume += addedVolume;
         inventory[type] += amount;
-        EventBusManager.Instance.ResourceUpdated(type, inventory[type]);
+        EventBusManager.Instance.ResourceAmountUpdated(type, inventory[type]);
         return true;
     }
 
@@ -124,7 +172,7 @@ public class StorageManager : MonoBehaviour
         {
             currentVolume -= resourceInfos[type].VolumePerUnit * amountToConsume;
             inventory[type] -= amountToConsume;
-            EventBusManager.Instance.ResourceUpdated(type, inventory[type]);
+            EventBusManager.Instance.ResourceAmountUpdated(type, inventory[type]);
         }
         
         return amountToConsume;
@@ -137,7 +185,8 @@ public class StorageManager : MonoBehaviour
 
     private void UpdateStorageCapacity(float changeCapacity)
     {
-        totalCapacity += changeCapacity;
+        capacityForStorageBuildings += changeCapacity;
+        totalCapacity += baseStartCapacity + capacityForStorageBuildings;
         EventBusManager.Instance.StorageCapacityUpdated(totalCapacity);
     }
 }

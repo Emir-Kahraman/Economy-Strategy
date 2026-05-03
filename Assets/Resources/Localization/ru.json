@@ -1,0 +1,53 @@
+{
+  "ui": {
+    "MainMenu_Play": "Играть",
+    "MainMenu_Continue": "Продолжить",
+    "MainMenu_Campaign": "Кампания",
+    "MainMenu_Generate": "Генерация",
+    "MainMenu_Back": "Назад",
+    "CampaignMenu_Easy": "Легкий",
+    "CampaignMenu_Medium": "Нормальный",
+    "CampaignMenu_Hard": "Сложный",
+    "CampaignMenu_Expert": "Эксперт",
+    "GenerateMenu_Play": "Создать",
+    "GenerateMenu_WorldSizeParameters": "Размер Мира",
+    "GenerateMenu_StartMoneyParameters": "Начальный Капитал",
+    "GenerateMenu_StartPeriodParameters": "Начальный Период",
+    "GenerateMenu_WorldSize_Small": "Маленький",
+    "GenerateMenu_WorldSize_Medium": "Средний",
+    "GenerateMenu_WorldSize_Large": "Большой",
+    "GenerateMenu_StartMoney_Low": "Скудный",
+    "GenerateMenu_StartMoney_Medium": "Средний",
+    "GenerateMenu_StartMoney_High": "Крупный",
+    "LevelMenu_Panels_Bankruptcy": "Банкротства!",
+    "LevelMenu_Panels_GameOver": "Игра Окончена",
+    "FactoryMenu_FactoryStatus_Pause": "Пауза",
+    "FactoryMenu_FactoryStatus_Active": "Активный",
+    "FactoryMenu_FactoryStatus_Inactive": "Неактивный",
+    "PauseMenu_Resume": "Продолжить",
+    "PauseMenu_Restart": "Заново",
+    "PauseMenu_MainMenu": "Главное Меню"
+  },
+  "quests": {
+    "Quest_Money": "Накопить: {0}/{1} монет",
+    "Quest_GatherResource": "Собрать: {0}/{1} {2}",
+    "Quest_ProduceResource": "Произвести: {0}/{1} {2}",
+    "Quest_Building": "Построить: {0}/{1} {2}",
+    "Quest_Period": "Достичь периода: {0}/{1}"
+  },
+  "buildings": {
+    "Forest": "Лес",
+    "LumberCamp": "Дом Лесника",
+    "Quarry": "Карьер",
+    "SmallStorage": "Малый Склад",
+    "TestBuilding": "Тестовое Здание"
+  },
+  "resources": {
+    "Copper": "Медь",
+    "Forest": "Лес",
+    "Stone": "Булыжник",
+    "StoneOre": "Камень",
+    "Test": "Тестовый Ресурс",
+    "Wood": "Бревно"
+  }
+}

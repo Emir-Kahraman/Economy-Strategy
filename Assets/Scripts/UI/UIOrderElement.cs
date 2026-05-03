@@ -24,6 +24,10 @@ public class UIOrderElement : MonoBehaviour
 
     private bool acceptedOrder;
     private float time;
+    public OrderData GetOrderData()
+    {
+        return new OrderData(id, existenceTime, completionTime, resourceData, resourceAmount, rewardAmount);
+    }
     public void Initialize(OrderData data, UIOrdersMenuController parent)
     {
         id = data.id;
@@ -58,16 +62,26 @@ public class UIOrderElement : MonoBehaviour
 
         text.text = $"{minutes:00}:{seconds:00}";
     }
+    public void OrderAccepted()//¬ызываетс€ из UIOrdersMenuController при загрузке заказов из сохранени€, дл€ уже прин€тых заказов
+    {
+        time = completionTime;
+        acceptedOrder = true;
+        acceptedTimeText.gameObject.SetActive(false);
 
+        orderButton.onClick.RemoveAllListeners();
+        orderButton.onClick.AddListener(SubmitOrderResources);
+    }
     private void AcceptOrder()
     {
         if (acceptedOrder) return;
         if (!OrdersManager.Instance.CanAcceptOrder()) return;
 
+        EventBusManager.Instance.OrderAccept(id);
+
         time = completionTime;
         acceptedOrder = true;
         acceptedTimeText.gameObject.SetActive(false);
-        parentController.OrderAccepted(id);
+        
         orderButton.onClick.RemoveAllListeners();
         orderButton.onClick.AddListener(SubmitOrderResources);
     }

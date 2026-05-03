@@ -1,17 +1,30 @@
-using NUnit.Framework;
-using UnityEngine;
 using System.Collections.Generic;
-using Unity.VisualScripting;
+using System.Linq;
+using UnityEngine;
 
-public class ProductionManager : MonoBehaviour
+public class ProductionManager : MonoBehaviour //Данный менеджер должен быть всегда ниже в иерархии за TilemapManager.
 {
     public static ProductionManager Instance;
 
     private bool _bankruptcy = false;
 
-    private readonly List<ProductionFactory> allFactories = new();//Пока нигде не используем
+    private List<ProductionFactory> allFactories = new();
     private readonly List<ProductionFactory> activeFactories = new();
     private ProductionFactory targetFactory;
+
+    public ProductionManagerData GetProductionManagerData()
+    {
+        var data = new ProductionManagerData();
+        data.allFactories = new();
+        foreach (var factory in allFactories)
+        {
+            if (factory != null)
+            {
+                data.allFactories.Add(factory.GetSaveData());
+            }
+        }
+        return data;
+    }
 
     private void Awake()
     {
@@ -25,29 +38,77 @@ public class ProductionManager : MonoBehaviour
     {
         InitializeSingleton();
         InitializeEvents();
+        IsLevelLoadFromSave();
     }
     private void InitializeSingleton()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
 
-        DontDestroyOnLoad(gameObject);
         gameObject.name = "ProductionManager";
     }
     private void InitializeEvents()
     {
+        EventBusManager.Instance.OnProductionFactoryBuilt += RegisterFactory;
+        EventBusManager.Instance.OnProductionFactoryDeleted += UnregisterFactory;
         EventBusManager.Instance.OnBankruptcy += Bankruptcy;
     }
     private void UninitializeEvents()
     {
+        EventBusManager.Instance.OnProductionFactoryBuilt -= RegisterFactory;
+        EventBusManager.Instance.OnProductionFactoryDeleted -= UnregisterFactory;
         EventBusManager.Instance.OnBankruptcy -= Bankruptcy;
     }
+    private void IsLevelLoadFromSave()
+    {
+        if (SaveManager.Instance.IsLoadLevelFromSave)
+        {
+           LoadProductionManagerData(SaveManager.Instance.LoadedLevelDates);
+        }
+    }
+    private void LoadProductionManagerData(GameSessionData gameSessionData)
+    {
+        ProductionManagerData data = gameSessionData.productionManagerData;
+        var buildings = TilemapManager.Instance.GetTilemapOfType(TilemapType.Buildings);
+        var factories = buildings.transform.Cast<Transform>().Select(t => t.GetComponent<ProductionFactory>()).Where(f => f != null).ToList();
+        
+        allFactories = new(factories);
+        Dictionary<Vector3Int, ProductionFactory> factoryByCell = new();
+        foreach (var factory in allFactories)
+        {
+            if (factory != null)
+            {
+                factoryByCell[factory.GetCurrentCell()] = factory;
+            }
+        }
+            
+
+        foreach (var factoryData in data.allFactories)
+        {
+            Vector3Int cell = factoryData.originCell.ToVector3Int();
+            if (factoryByCell.TryGetValue(cell, out ProductionFactory factory))
+                factory.LoadFromSaveData(factoryData);
+            else
+                Debug.LogWarning($"Factory at cell {cell} not found during load");
+        }
+
+        activeFactories.Clear();
+        foreach (var factory in allFactories)
+        {
+            if (factory != null && !factory.IsPaused)
+            {
+                activeFactories.Add(factory);
+            }
+        }
+    }
+
+
     private void Bankruptcy()
     {
         _bankruptcy = true;
     }
 
-    public void ManagerFactory(ProductionFactory factory)
+    public void RegisterFactory(ProductionFactory factory)
     {
         if (factory == null) return;
 

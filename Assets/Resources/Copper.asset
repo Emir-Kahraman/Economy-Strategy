@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Copper
   m_EditorClassIdentifier: 
   Period: 3
-  Type: 6
+  Type: 0
   CanBeOrdered: 1
-  Tile: {fileID: 11400000, guid: 7068ef0a4a1257f41b51d97120ea7434, type: 2}
-  Name: Copper
+  Tile: {fileID: 0}
+  Key: Copper
   Icon: {fileID: 2161406252260995150, guid: 402f7ce161b6e9e4dbc3db63a18c6f9d, type: 3}
   VolumePerUnit: 4
   Price: 50

@@ -49,7 +49,7 @@ public class UIBuildingButton : MonoBehaviour
     {
         data = buildingData;
         icon.sprite = data.icon;
-        titleText.text = data.name;
+        titleText.text = data.GetLocalizedName();
         costText.text = buildingData.cost.ToString();
         costIcon.sprite = moneyIcon;
         relatedBuilding = buildingData.BuildingObject;
@@ -76,13 +76,13 @@ public class UIBuildingButton : MonoBehaviour
 
     private void InitializeRelatedBuilding()
     {
-        if (relatedBuilding == null)
+        if (relatedBuilding == null)// If there is no related building, we assume it's a building that doesn't have specific information to display, so we hide the service cost and product information.
         {
             serviceCost.gameObject.SetActive(false);
             serviceCostIcon.gameObject.SetActive(false);
             return;
         }
-        else if (relatedBuilding.GetComponent<StorageBuilding>())
+        else if (relatedBuilding.GetComponent<StorageBuilding>())// If the building has a StorageBuilding component, we assume it's a storage building and display its service cost and capacity as the final product.
         {
             StorageBuilding storageBuilding = relatedBuilding.GetComponent<StorageBuilding>();
 
@@ -92,7 +92,7 @@ public class UIBuildingButton : MonoBehaviour
             finallyProductGO.GetComponentInChildren<TextMeshProUGUI>().text = storageBuilding.GetCapacity().ToString();
             finallyProductGO.GetComponentInChildren<Image>().sprite = storageIcon;
         }
-        else if (relatedBuilding.GetComponent<ProductionFactory>())
+        else if (relatedBuilding.GetComponent<ProductionFactory>())// If the building has a ProductionFactory component, we assume it's a production factory and display its service cost, final product, and raw materials.
         {
             ProductionFactory productionFactory = relatedBuilding.GetComponent<ProductionFactory>();
 
@@ -109,6 +109,11 @@ public class UIBuildingButton : MonoBehaviour
                 rawMaterialGO.GetComponentInChildren<Image>().sprite = condition.requiredResource.Icon;
             }
         }
+        else// If the building is not a storage or production factory, we assume it has no service cost or specific product information to display.
+        {
+            serviceCost.gameObject.SetActive(false);
+            serviceCostIcon.gameObject.SetActive(false);
+        }
     }
 
     private void InitializeParameters()
@@ -120,6 +125,7 @@ public class UIBuildingButton : MonoBehaviour
     {
         EventBusManager.Instance.SwitchToBuildingGameMode();
         BuildingManager.Instance.StartBuilding(data);
+        EventBusManager.Instance.BuildingForBuiltSelected(data);
     }
     public void SetVisible(bool visible)
     {

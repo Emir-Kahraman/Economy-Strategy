@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Stone_Ore
   m_EditorClassIdentifier: 
   Period: 1
-  Type: 3
-  CanBeOrdered: 1
+  Type: 5
+  CanBeOrdered: 0
   Tile: {fileID: 0}
-  Name: Stone Ore
+  Key: StoneOre
   Icon: {fileID: 3452003437791708593, guid: 6678a36b72c8f23438985c9e3f1461ae, type: 3}
   VolumePerUnit: 0
   Price: 0

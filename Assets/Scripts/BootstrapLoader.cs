@@ -11,6 +11,6 @@ public class BootstrapLoader : MonoBehaviour
             Instantiate(gameManagerPrefab);
         }
         
-        EventBusManager.Instance.SceneLoadRequest("MainMenu");
+        EventBusManager.Instance.SceneLoadRequest("Main_Menu");
     }
 }

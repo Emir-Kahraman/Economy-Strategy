@@ -1,54 +1,47 @@
-using System;
-using TMPro;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class UIGameOverController : MonoBehaviour, IUIWindow
 {
-    [SerializeField] private GameObject targetWindow;
-    [SerializeField] private TextMeshProUGUI causeForGameOver;
-    [SerializeField] private Button closeButton;
+    [SerializeField] private TextMeshProUGUI gameOverText;
+    [SerializeField] private Button restartButton;
+    [SerializeField] private Button mainMenuButton;
 
     public void Initialize()
     {
-        InitializeParameters();
-        InitializeEvents();
         CloseWindow();
-    }
-    private void OnDestroy()
-    {
-        UninitializeEvents();
+        restartButton?.onClick.AddListener(OnRestart);
+        mainMenuButton?.onClick.AddListener(OnMainMenu);
     }
 
-    private void InitializeParameters()
+    public void Uninitialize()
     {
-        closeButton.onClick.AddListener(CloseWindowRequested);
-    }
-    private void InitializeEvents()
-    {
-        EventBusManager.Instance.OnGameOver += GameOverCause;
-    }
-    private void UninitializeEvents()
-    {
-        EventBusManager.Instance.OnGameOver -= GameOverCause;
-    }
-
-    private void GameOverCause(string cause)
-    {
-        causeForGameOver.text = cause;
-    }
-
-    private void CloseWindowRequested()
-    {
-        EventBusManager.Instance.WindowCloseRequested(this);
+        restartButton?.onClick.RemoveListener(OnRestart);
+        mainMenuButton?.onClick.RemoveListener(OnMainMenu);
     }
 
     public void OpenWindow()
     {
-        targetWindow.SetActive(true);
+        gameObject.SetActive(true);
+        // Пауза уже установлена в GameOverManager
     }
+
     public void CloseWindow()
     {
-        targetWindow.SetActive(false);
+        gameObject.SetActive(false);
+        Time.timeScale = 1f;  // ★ Возобновляем игру
+    }
+
+    private void OnRestart()
+    {
+        Time.timeScale = 1f;  // ★ Убираем паузу перед рестартом
+        EventBusManager.Instance.LevelRestart();
+    }
+
+    private void OnMainMenu()
+    {
+        Time.timeScale = 1f;  // ★ Убираем паузу перед выходом
+        EventBusManager.Instance.SceneLoadRequest("Main_Menu");
     }
 }

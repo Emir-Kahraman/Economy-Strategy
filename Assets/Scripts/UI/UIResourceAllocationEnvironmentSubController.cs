@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -19,10 +20,13 @@ public class UIResourceAllocationEnvironmentSubController : MonoBehaviour, IUIWi
     [SerializeField] private Color emptyCellColor = new();
     [SerializeField] private Color occupiedCellColor = new();
     [SerializeField] private Color otherOccupiedCellColor = new();
+    [Space]
+    [SerializeField] private GameObject radiusOutlinePrefab;
 
     private Tilemap resourceTilemap;
     private ProductionFactory targetFactory;
     private ProductionFactory.ProductionCondition targetCondition;
+    private GameObject radiusOutlineInstance;
     private UIFactoryWindowController parentController;
     private Dictionary<Vector3Int, ProductionFactory> cellsInRadius = new();
     private Dictionary<Vector3Int, GameObject> highlights = new();
@@ -34,6 +38,25 @@ public class UIResourceAllocationEnvironmentSubController : MonoBehaviour, IUIWi
         InitializeButtons();
         CloseWindow();
     }
+    public void Uninitialize()
+    {
+        UninitializeParameters();
+        UninitializeObjects();
+        UninitializeButtons();
+    }
+    private void UninitializeParameters()
+    {
+        resourceTilemap = null;
+    }
+    private void UninitializeObjects()
+    {
+        highlightsParent = null;
+    }
+    private void UninitializeButtons()
+    {
+        closeButton.onClick.RemoveAllListeners();
+    }
+
     private void InitializeParameters()
     {
         resourceTilemap = TilemapManager.Instance.GetTilemapOfType(TilemapType.Resources);
@@ -81,6 +104,37 @@ public class UIResourceAllocationEnvironmentSubController : MonoBehaviour, IUIWi
                 CreateHighlight(cell, otherOccupiedCellColor);
             }
         }
+    }
+    
+    private void CreateRadiusOutline()
+    {
+        if (radiusOutlineInstance != null) Destroy(radiusOutlineInstance);
+        
+        radiusOutlineInstance = Instantiate(radiusOutlinePrefab, highlightsParent.transform);
+        UpdateRadiusOutline();
+    }
+
+    private void UpdateRadiusOutline()
+    {
+        Vector3 center = targetFactory.transform.position;
+        int radius = targetCondition.requiredTileRadius;
+        float size = radius * 2 + 1;
+        float halfCell = 0.5f;
+        float minX = center.x - radius - halfCell;
+        float maxX = center.x + radius + halfCell;
+        float minY = center.y - radius - halfCell;
+        float maxY = center.y + radius + halfCell;
+
+        LineRenderer lr = radiusOutlineInstance.GetComponent<LineRenderer>();
+        lr.positionCount = 5;
+        lr.SetPositions(new Vector3[]
+        {
+            new Vector3(minX, minY, center.z),
+            new Vector3(maxX, minY, center.z),
+            new Vector3(maxX, maxY, center.z),
+            new Vector3(minX, maxY, center.z),
+            new Vector3(minX, minY, center.z)
+        });
     }
 
     private void Update()
@@ -133,6 +187,14 @@ public class UIResourceAllocationEnvironmentSubController : MonoBehaviour, IUIWi
         }
         highlights.Clear();
     }
+    private void DestroyRadiusOutline()
+    {
+        if (radiusOutlineInstance != null)
+        {
+            Destroy(radiusOutlineInstance);
+            radiusOutlineInstance = null;
+        }
+    }
 
     private void CloseWindowRequest()
     {
@@ -143,6 +205,7 @@ public class UIResourceAllocationEnvironmentSubController : MonoBehaviour, IUIWi
     {
         targetWindow.SetActive(true);
         CellsHighlightsUpdate();
+        CreateRadiusOutline();
     }
     public void CloseWindow()
     {
@@ -150,5 +213,6 @@ public class UIResourceAllocationEnvironmentSubController : MonoBehaviour, IUIWi
         targetWindow.SetActive(false);
         cellsInRadius.Clear();
         DeleteAllHighlights();
+        DestroyRadiusOutline();
     }
 }

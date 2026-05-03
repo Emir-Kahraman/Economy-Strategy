@@ -1,9 +1,9 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.SceneManagement;
 
-public enum MenuType { None, MainMenu, PlaySelection, LevelSelection }
+public enum MenuType { None, MainMenu, PlaySelection, LevelSelection, WorldGenerateMenu }
 public class UIManager : MonoBehaviour
 {
     public static UIManager Instance;
@@ -16,6 +16,8 @@ public class UIManager : MonoBehaviour
     private MenuType currentMenu;
     private IUIWindow currentWindow;
 
+    private bool levelUIActive = false;
+    private bool mainMenuActive = false;
     private void Awake()
     {
         Initialize();
@@ -61,18 +63,6 @@ public class UIManager : MonoBehaviour
         }
         MainMenuSwitch(MenuType.MainMenu);
     }
-
-    private GameObject GetMainMenu(MenuType requestedMenu)
-    {
-        if (requestedMenu == MenuType.None) return null;
-        foreach (var menu in mainMenus)
-        {
-            if (menu.Type == requestedMenu)
-                return menu.gameObject;
-        }
-        Debug.LogError("MenuType not found! " + requestedMenu);
-        return null;
-    }
     private void InitializeUIMenus()
     {
         for (int i = 0; i < levelUIControllers.Count; i++)
@@ -84,21 +74,32 @@ public class UIManager : MonoBehaviour
 
     private void SwitchScene()
     {
-        if (SceneManager.GetActiveScene().buildIndex == 1)
+        if (levelUIActive)
+        {
+            DeactivatedLevelUI();
+            levelUIActive = false;
+        }
+        if (mainMenuActive)
+        {
+            DeactivatedMainMenuUI();
+            mainMenuActive = false;
+        }
+
+        if (SceneManager.GetActiveScene().buildIndex == 1) // Main Menu Scene
         {
             ActivatedMainMenuUI();
-            DeactivatedLevelUI();
+            mainMenuActive = true;
         }
-        else if (SceneManager.GetActiveScene().buildIndex > 1)
+        else if (SceneManager.GetActiveScene().buildIndex > 1) // Level Scenes
         {
             ActivatedLevelUI();
-            DeactivatedMainMenuUI();
+            levelUIActive = true;
         }
     }
     private void ActivatedMainMenuUI()
     {
-        currentMenu = MenuType.MainMenu;
-        MainMenuSwitch(currentMenu);
+        currentMenu = MenuType.None;
+        MainMenuSwitch(MenuType.MainMenu);
     }
     private void DeactivatedMainMenuUI()
     {
@@ -106,6 +107,7 @@ public class UIManager : MonoBehaviour
         {
             menu.gameObject.SetActive(false);
         }
+        currentMenu = MenuType.None;
     }
     private void ActivatedLevelUI()
     {
@@ -117,6 +119,7 @@ public class UIManager : MonoBehaviour
         foreach (var uiPanel in levelUIPanels)
         {
             uiPanel.gameObject.SetActive(true);
+            uiPanel.GetComponent<IUIPanel>().Initialize();
         }
     }
     private void DeactivatedLevelUI()
@@ -124,10 +127,21 @@ public class UIManager : MonoBehaviour
         foreach (var uiController in levelUIControllers)
         {
             uiController.gameObject.SetActive(false);
+            uiController.GetComponent<IUIWindow>().Uninitialize();
         }
         foreach (var uiPanel in levelUIPanels)
         {
             uiPanel.gameObject.SetActive(false);
+            uiPanel.GetComponent<IUIPanel>().Uninitialize();
+        }
+        ResetCurrentWindow();
+    }
+    public void ResetCurrentWindow()
+    {
+        if (currentWindow != null)
+        {
+            currentWindow.CloseWindow();
+            currentWindow = null;
         }
     }
 
@@ -149,6 +163,17 @@ public class UIManager : MonoBehaviour
         var menuToOpen = GetMainMenu(currentMenu);
         if (menuToOpen == null) Debug.LogError("MenuType Selected NONE");
         menuToOpen.gameObject.SetActive(true);
+    }
+    private GameObject GetMainMenu(MenuType requestedMenu)
+    {
+        if (requestedMenu == MenuType.None) return null;
+        foreach (var menu in mainMenus)
+        {
+            if (menu.Type == requestedMenu)
+                return menu.gameObject;
+        }
+        Debug.LogError("MenuType not found! " + requestedMenu);
+        return null;
     }
 
     public UIFactoryWindowController GetUIMenuComponent()
@@ -177,5 +202,31 @@ public class UIManager : MonoBehaviour
 
         window.CloseWindow();
         currentWindow = null;
+    }
+
+    // ★ Новый метод для открытия меню проигрыша
+    public void ShowGameOver()
+    {
+        var gameOverController = GetGameOverController();
+        if (gameOverController != null)
+        {
+            gameOverController.OpenWindow();
+        }
+        else
+        {
+            Debug.LogError("GameOverController не найден!");
+        }
+    }
+
+    private IUIWindow GetGameOverController()
+    {
+        foreach (var controller in levelUIControllers)
+        {
+            if (controller.TryGetComponent<UIGameOverController>(out var gameOverController))
+            {
+                return gameOverController;
+            }
+        }
+        return null;
     }
 }

@@ -4,9 +4,9 @@ using UnityEngine.UI;
 
 public class UIConditionElement : MonoBehaviour
 {
-    public Image conditionIcon;
+    public Image conditionTypeIcon;
     public Button editButton;
-    public TextMeshProUGUI conditionText;
+    public Image conditionResourceIcon;
     public Image statusIndicator;
     [Space]
     public Color metColor = Color.green;
@@ -18,8 +18,8 @@ public class UIConditionElement : MonoBehaviour
 
     public void Initialize(ConditionUIData data, ProductionFactory.ProductionCondition condition, UIFactoryWindowController parentWindow)
     {
-        conditionIcon.sprite = data.icon;
-        conditionText.text = data.description;
+        conditionTypeIcon.sprite = data.typeIcon;
+        conditionResourceIcon.sprite = condition.requiredResource.Icon;
 
         switch (data.status)
         {

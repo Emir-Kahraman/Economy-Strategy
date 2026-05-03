@@ -44,15 +44,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a88143a03a3c0a846bcf7ea664affa8e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  allResources:
-  - {fileID: 11400000, guid: 8dc32631463e81544b7b1cfbc2c9e32b, type: 2}
-  - {fileID: 11400000, guid: c355fdd6fd8d3884398f76abefd66a15, type: 2}
-  - {fileID: 11400000, guid: a8b72ab8015554d4f98c041a0d01b23c, type: 2}
-  - {fileID: 11400000, guid: 61e71144f2e746e46adcb9d4f7aa7dab, type: 2}
-  baseStartCapacity: 100000000
-  currentVolume: 0
-  startResources:
-  - type: 1
-    amount: 5
-  - type: 4
-    amount: 555555
+  currentLevelRuntimeData: {fileID: 11400000, guid: 8c6d84204b860dd4388a1a0139972625, type: 2}
+  baseStartCapacity: 100

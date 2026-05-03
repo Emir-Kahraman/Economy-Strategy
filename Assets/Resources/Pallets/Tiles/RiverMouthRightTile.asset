@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8dcc18b8c7189f64896f12c222620306, type: 3}
+  m_Name: RiverMouthRightTile
+  m_EditorClassIdentifier: Assembly-CSharp::NewCustomRuleTile
+  m_DefaultSprite: {fileID: 9021647655359460990, guid: 79731696f1c04af41b109dad919980b8, type: 3}
+  m_DefaultGameObject: {fileID: 4481216517924765449, guid: 174a28da130a207498ab289d55a213cc, type: 3}
+  m_DefaultColliderType: 1
+  m_TilingRules:
+  - m_Id: 0
+    m_Sprites:
+    - {fileID: -3861847356161162523, guid: 786ce557b537f264785cbe8bd8e561d5, type: 3}
+    m_GameObject: {fileID: 4481216517924765449, guid: 174a28da130a207498ab289d55a213cc, type: 3}
+    m_MinAnimationSpeed: 1
+    m_MaxAnimationSpeed: 1
+    m_PerlinScale: 0.5
+    m_Output: 0
+    m_ColliderType: 1
+    m_RandomTransform: 0
+    m_Neighbors: 01000000
+    m_NeighborPositions:
+    - {x: 0, y: 1, z: 0}
+    m_RuleTransform: 0
+  - m_Id: 1
+    m_Sprites:
+    - {fileID: 7304241274659683535, guid: f653424ffef44174397299c8b090fd82, type: 3}
+    m_GameObject: {fileID: 4481216517924765449, guid: 174a28da130a207498ab289d55a213cc, type: 3}
+    m_MinAnimationSpeed: 1
+    m_MaxAnimationSpeed: 1
+    m_PerlinScale: 0.5
+    m_Output: 0
+    m_ColliderType: 1
+    m_RandomTransform: 0
+    m_Neighbors: 01000000
+    m_NeighborPositions:
+    - {x: 0, y: -1, z: 0}
+    m_RuleTransform: 0
+  - m_Id: 2
+    m_Sprites:
+    - {fileID: 5302786976270978853, guid: 9803a918649e6a74ab99a6724a14007d, type: 3}
+    m_GameObject: {fileID: 4481216517924765449, guid: 174a28da130a207498ab289d55a213cc, type: 3}
+    m_MinAnimationSpeed: 1
+    m_MaxAnimationSpeed: 1
+    m_PerlinScale: 0.5
+    m_Output: 0
+    m_ColliderType: 1
+    m_RandomTransform: 0
+    m_Neighbors: 01000000
+    m_NeighborPositions:
+    - {x: -1, y: 0, z: 0}
+    m_RuleTransform: 0
+  tilesToConnect:
+  - {fileID: 11400000, guid: df16c1f1536700e4d86e31a3022f1907, type: 2}

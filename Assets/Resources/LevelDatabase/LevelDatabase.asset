@@ -1,0 +1,92 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d1ea3cb868763774b8885da29db057f2, type: 3}
+  m_Name: LevelDatabase
+  m_EditorClassIdentifier: Assembly-CSharp::LevelDatabase
+  levels:
+  - index: 1
+    sceneName: Level_1
+    difficulty: 0
+    levelPrefab: {fileID: 2628211133797857285, guid: eda7595085a01474cbf68fc343db0ba8, type: 3}
+    isUnlocked: 0
+    startingMoney: 350
+    startResources:
+    - type: 1
+      amount: 50
+    periodParameters:
+      startPeriod: 1
+      endPeriod: 4
+      timerToIIPeriod: 2
+      timerToIIIPeriod: 2
+      timerToIVPeriod: 3
+    moneyQuests:
+    - isCompleted: 1
+      targetAmount: 250
+    gatherResourceQuests: []
+    produceResourceQuests: []
+    buildingQuests: []
+    periodQuests:
+    - isCompleted: 0
+      targetPeriod: 3
+    startMoneyPrefabs: 
+    startPeriodPrefabs: 
+  - index: 2
+    sceneName: Level_2
+    difficulty: 0
+    levelPrefab: {fileID: 2628211133797857285, guid: 4e7ff16ee71cdff459eeb2505dd180f7, type: 3}
+    isUnlocked: 0
+    startingMoney: 2500
+    startResources: []
+    periodParameters:
+      startPeriod: 2
+      endPeriod: 4
+      timerToIIPeriod: 0
+      timerToIIIPeriod: 0
+      timerToIVPeriod: 0
+    moneyQuests:
+    - isCompleted: 0
+      targetAmount: 3500
+    gatherResourceQuests:
+    - isCompleted: 0
+      resourceData: {fileID: 11400000, guid: a8b72ab8015554d4f98c041a0d01b23c, type: 2}
+      targetAmount: 25
+    produceResourceQuests:
+    - isCompleted: 0
+      resourceData: {fileID: 11400000, guid: c355fdd6fd8d3884398f76abefd66a15, type: 2}
+      targetAmount: 8
+    buildingQuests:
+    - isCompleted: 0
+      buildingData: {fileID: 11400000, guid: 07310621caa3b3842ab4d46545efe212, type: 2}
+      targetAmount: 4
+    periodQuests: []
+    startMoneyPrefabs: 
+    startPeriodPrefabs: 
+  - index: 0
+    sceneName: Level_Test
+    difficulty: 2
+    levelPrefab: {fileID: 3215551684842418096, guid: 9efaa455dedc5094692b82f8719c5fb8, type: 3}
+    isUnlocked: 0
+    startingMoney: 0
+    startResources: []
+    periodParameters:
+      startPeriod: 0
+      endPeriod: 0
+      timerToIIPeriod: 0
+      timerToIIIPeriod: 0
+      timerToIVPeriod: 0
+    moneyQuests: []
+    gatherResourceQuests: []
+    produceResourceQuests: []
+    buildingQuests: []
+    periodQuests: []
+    startMoneyPrefabs: 
+    startPeriodPrefabs: 

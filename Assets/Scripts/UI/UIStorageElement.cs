@@ -25,7 +25,7 @@ public class UIStorageElement : MonoBehaviour
     public void SetData(ResourceData data)
     {
         resourceType = data.Type;
-        resourceName = data.Name;
+        resourceName = data.Key;
         perUnitVolume = data.VolumePerUnit;
 
         currentAmount = 0;
@@ -36,7 +36,7 @@ public class UIStorageElement : MonoBehaviour
     private void SetUIElements(ResourceData data)
     {
         icon.sprite = data.Icon;
-        nameText.text = data.Name;
+        nameText.text = data.GetLocalizedName();
 
         UIElementsUpdate();
     }

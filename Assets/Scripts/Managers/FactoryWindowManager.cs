@@ -23,7 +23,6 @@ public class FactoryWindowManager : MonoBehaviour
         if(Instance == null) Instance = this;
         else Destroy(gameObject);
 
-        DontDestroyOnLoad(gameObject);
         gameObject.name = "FactoryWindowManager";
     }
     private void InitializeEvents()

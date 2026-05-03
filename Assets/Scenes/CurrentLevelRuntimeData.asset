@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9d8d0b28b522024f915b98e1ad813f5, type: 3}
+  m_Name: CurrentLevelRuntimeData
+  m_EditorClassIdentifier: Assembly-CSharp::CurrentLevelRuntimeData
+  isLoadLevelFromSave: 0
+  levelData:
+    index: 2
+    sceneName: Level_2
+    difficulty: 0
+    levelPrefab: {fileID: 2628211133797857285, guid: 4e7ff16ee71cdff459eeb2505dd180f7, type: 3}
+    isUnlocked: 0
+    startingMoney: 2500
+    startResources: []
+    periodParameters:
+      startPeriod: 2
+      endPeriod: 4
+      timerToIIPeriod: 0
+      timerToIIIPeriod: 0
+      timerToIVPeriod: 0
+    moneyQuests:
+    - isCompleted: 0
+      targetAmount: 3500
+    gatherResourceQuests:
+    - isCompleted: 0
+      resourceData: {fileID: 11400000, guid: a8b72ab8015554d4f98c041a0d01b23c, type: 2}
+      targetAmount: 25
+    produceResourceQuests:
+    - isCompleted: 0
+      resourceData: {fileID: 11400000, guid: c355fdd6fd8d3884398f76abefd66a15, type: 2}
+      targetAmount: 8
+    buildingQuests:
+    - isCompleted: 0
+      buildingData: {fileID: 11400000, guid: 07310621caa3b3842ab4d46545efe212, type: 2}
+      targetAmount: 4
+    periodQuests: []
+    startMoneyPrefabs: 
+    startPeriodPrefabs: 

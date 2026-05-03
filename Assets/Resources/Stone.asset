@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Stone
   m_EditorClassIdentifier: 
   Period: 1
-  Type: 5
+  Type: 13
   CanBeOrdered: 1
   Tile: {fileID: 0}
-  Name: Stone
+  Key: Stone
   Icon: {fileID: 1571432586616209339, guid: b08e754d351788b409213d4ceab5cf43, type: 3}
   VolumePerUnit: 5
   Price: 10

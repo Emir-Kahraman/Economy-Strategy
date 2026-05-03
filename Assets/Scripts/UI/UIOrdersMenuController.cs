@@ -16,15 +16,33 @@ public class UIOrdersMenuController : MonoBehaviour, IUIWindow
 
     private Dictionary<string, UIOrderElement> activeOrders = new();
     private Dictionary<string, UIOrderElement> acceptedOrders = new();
+
+    public List<UIOrderElement> GetAcceptedOrders()
+    {
+        List<UIOrderElement> orders = new List<UIOrderElement>(acceptedOrders.Values);
+        return orders;
+    }
+    public List<UIOrderElement> GetActiveOrders()
+    {
+        List<UIOrderElement> orders = new List<UIOrderElement>(activeOrders.Values);
+        return orders;
+    }
     public void Initialize()
     {
         InitializeButtons();
+        ClearOrders();
         InitializeEvents();
         CloseWindow();
     }
-    private void OnDestroy()
+    public void Uninitialize()
     {
+        UninitializeButtons();
         UninitializeEvents();
+        ClearOrders();
+    }
+    private void UninitializeButtons()
+    {
+        closeButton.onClick.RemoveAllListeners();
     }
     private void InitializeButtons()
     {
@@ -32,21 +50,53 @@ public class UIOrdersMenuController : MonoBehaviour, IUIWindow
     }
     private void InitializeEvents()
     {
+        EventBusManager.Instance.OnOrdersLoadedFromSave += LoadOrdersFromSave;
         EventBusManager.Instance.OnOrderCreated += CreateOrder;
+        EventBusManager.Instance.OnOrderAccept += OrderAccepted;
     }
     private void UninitializeEvents()
     {
         EventBusManager.Instance.OnOrderCreated -= CreateOrder;
+        EventBusManager.Instance.OnOrdersLoadedFromSave -= LoadOrdersFromSave;
+        EventBusManager.Instance.OnOrderAccept -= OrderAccepted;
+    }
+    private void ClearOrders()
+    {
+        foreach (var order in activeOrders.Values)
+        {
+            Destroy(order.gameObject);
+        }
+        activeOrders.Clear();
+        foreach (var order in acceptedOrders.Values)
+        {
+            Destroy(order.gameObject);
+        }
+        acceptedOrders.Clear();
     }
 
-    private void CreateOrder(OrderData orderData)//
+    private void LoadOrdersFromSave(List<OrderData> orders, bool isOrdersAccepted)
+    {
+        foreach (OrderData orderData in orders)
+        {
+            if (isOrdersAccepted) CreateAcceptedOrder(orderData);
+            else CreateOrder(orderData);
+        }
+    }
+    private void CreateAcceptedOrder(OrderData orderData)
+    {
+        UIOrderElement order = Instantiate(orderElementPrefab, acceptedOrdersContainer).GetComponent<UIOrderElement>();
+        acceptedOrders[orderData.id] = order;
+        order.GetComponent<UIOrderElement>().Initialize(orderData, this);
+        order.GetComponent<UIOrderElement>().OrderAccepted();
+    }
+    private void CreateOrder(OrderData orderData)
     {
         UIOrderElement order = Instantiate(orderElementPrefab, activeOrdersContainer).GetComponent<UIOrderElement>();
         activeOrders[orderData.id] = order;
         order.GetComponent<UIOrderElement>().Initialize(orderData, this);
     }
 
-    public void OrderAccepted(string id)
+    private void OrderAccepted(string id)
     {
         acceptedOrders[id] = activeOrders[id];
         activeOrders.Remove(id);

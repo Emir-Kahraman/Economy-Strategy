@@ -22,7 +22,6 @@ public class GameModeManager : MonoBehaviour
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
 
-        DontDestroyOnLoad(gameObject);
         gameObject.name = "GameModeManager";
     }
 
@@ -50,8 +49,13 @@ public class GameModeManager : MonoBehaviour
         EventBusManager.Instance.OnSwitchToResourceAllocationMode -= EnterToResourceAllocationMode;
     }
 
-    private void EnterToObservationMode() => CurrentMode = GameMode.Observation;
-    private void EnterToBuildingMode() => CurrentMode = GameMode.Building;
-    private void EnterToDemolitionMode() => CurrentMode = GameMode.Demolition;
-    private void EnterToResourceAllocationMode() => CurrentMode = GameMode.ResourceAllocation;
+    private void EnterToObservationMode() => GameModeChange(GameMode.Observation);
+    private void EnterToBuildingMode() => GameModeChange(GameMode.Building);
+    private void EnterToDemolitionMode() => GameModeChange(GameMode.Demolition);
+    private void EnterToResourceAllocationMode() => GameModeChange(GameMode.ResourceAllocation);
+    private void GameModeChange(GameMode gameMode)
+    {
+        CurrentMode = gameMode;
+        EventBusManager.Instance.GameModeChanged(CurrentMode);
+    }
 }

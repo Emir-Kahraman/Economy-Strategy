@@ -44,14 +44,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2085d11c0c61196439257e0f3cc8be65, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  baseExistenceTime: 15
-  baseCompletionTime: 20
+  currentLevelRuntimeData: {fileID: 11400000, guid: 8c6d84204b860dd4388a1a0139972625, type: 2}
+  baseExistenceTime: 60
+  baseCompletionTime: 60
   baseResourceAmount: 10
-  baseOrderSpawnTimer: 1
-  maxActiveOrders: 999
+  baseOrderSpawnTimer: 5
+  maxActiveOrders: 30
   increaseValue: 5
-  currentPeriod: 1
-  maxPeriod: 1
-  timerToIIPeriod: 2
-  timerToIIIPeriod: 2
-  timerToIVPeriod: 2

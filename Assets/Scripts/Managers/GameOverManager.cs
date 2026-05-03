@@ -1,50 +1,53 @@
-using System;
+﻿using System;
 using UnityEngine;
 
 public class GameOverManager : MonoBehaviour
 {
     public static GameOverManager Instance;
 
-    private UIGameOverController gameOverController;
-
     private void Awake()
     {
-        Initialize();
-    }
-    private void OnDestroy()
-    {
-        UninitiazeEvents();
-    }
-    private void Initialize()
-    {
         InitializeSingleton();
-        InitializeParameters();
         InitializeEvents();
     }
+
+    private void OnDestroy()
+    {
+        UninitializeEvents();
+    }
+
     private void InitializeSingleton()
     {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
 
-        DontDestroyOnLoad(gameObject);
         gameObject.name = "GameOverManager";
     }
-    private void InitializeParameters()
-    {
-        gameOverController = FindAnyObjectByType<UIGameOverController>();
-    }
+
     private void InitializeEvents()
     {
-        EventBusManager.Instance.OnBankruptcy += Bankruptcy;
-    }
-    private void UninitiazeEvents()
-    {
-        EventBusManager.Instance.OnBankruptcy -= Bankruptcy;
+        EventBusManager.Instance.OnBankruptcy += HandleBankruptcy;
+        EventBusManager.Instance.OnLevelRestart += ResetBankruptcyState;
     }
 
-    private void Bankruptcy()
+    private void UninitializeEvents()
     {
-        EventBusManager.Instance.WindowOpenRequested(gameOverController);
-        EventBusManager.Instance.GameOver("Bankruptcy");
+        EventBusManager.Instance.OnBankruptcy -= HandleBankruptcy;
+        EventBusManager.Instance.OnLevelRestart -= ResetBankruptcyState;
+    }
+
+    private void HandleBankruptcy()
+    {
+        Time.timeScale = 0f;
+        UIManager.Instance.ShowGameOver();  // ★ Просто вызываем метод менеджера
+        Debug.Log("💀 Банкротство! Игра на паузе.");
+    }
+
+    private void ResetBankruptcyState()
+    {
+        if (CurrencyManager.Instance != null)
+        {
+            CurrencyManager.Instance.ResetBankruptcyState();
+        }
     }
 }

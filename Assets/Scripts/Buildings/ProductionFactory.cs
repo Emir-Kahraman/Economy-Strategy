@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Win32.SafeHandles;
+using Newtonsoft.Json;
 using Unity.Collections;
 using Unity.VisualScripting;
 using UnityEditor;
@@ -15,7 +16,6 @@ public class ProductionFactory : MonoBehaviour
     [Serializable]
     public class ProductionData
     {
-        public string factoryName;
         public ResourceData outputResource;
         public int baseServiceCost;
         public float baseProductionTime;
@@ -46,7 +46,7 @@ public class ProductionFactory : MonoBehaviour
     private Dictionary<ResourceType, int> resourcesInProduction = new();
     private Dictionary<ResourceType, List<Vector3Int>> allocatedCells = new();
     private HashSet<Vector3Int> blockedCells = new();
-    
+
     private float currentProgress;
     private float currentEfficiency;
 
@@ -62,7 +62,38 @@ public class ProductionFactory : MonoBehaviour
     public bool IsPaused => isPaused;
     public bool IsOperational => isOperational;
     public int ServiceCost => productionData.baseServiceCost;
-    
+
+    public ProductionManagerData.ProductionFactorySaveData GetSaveData()
+    {
+        var data = new ProductionManagerData.ProductionFactorySaveData();
+        data.originCell = SerializableVector3Int.ToSerializableVector3Int(GetCurrentCell());
+
+        data.storedResources = new();
+        foreach (var kvp in storedResources)
+        {
+            data.storedResources.Add(new ProductionManagerData.ResourceEntry { resourceName = kvp.Key.ToString(), amount = kvp.Value });
+        }
+
+        data.allocatedCells = new();
+        foreach (var kvp in allocatedCells)
+        {
+            var entry = new ProductionManagerData.AllocatedCellEntry { resourceType = kvp.Key.ToString(), cells = kvp.Value.Select(cell => SerializableVector3Int.ToSerializableVector3Int(cell)).ToList() };
+            data.allocatedCells.Add(entry);
+        }
+
+        data.blockedCells = new();
+        foreach (var cell in blockedCells)
+        {
+            data.blockedCells.Add(SerializableVector3Int.ToSerializableVector3Int(cell));
+        }
+
+        data.currentProgress = currentProgress;
+        data.isPaused = isPaused;
+        data.serviceTime = serviceTime;
+
+        return data;
+    }
+
     private void Awake()
     {
         Initialize();
@@ -82,11 +113,11 @@ public class ProductionFactory : MonoBehaviour
     }
     private void InitializeFactory()
     {
-        ProductionManager.Instance.ManagerFactory(this);
+        EventBusManager.Instance.ProductionFactoryBuilt(this);
     }
     private void UninitializeFactory()
     {
-        ProductionManager.Instance.UnregisterFactory(this);
+        EventBusManager.Instance.ProductionFactoryDeleted(this);
         TilemapManager.Instance.ReleaseCells(this);
     }
     private void InitializeResourceLists()
@@ -112,7 +143,6 @@ public class ProductionFactory : MonoBehaviour
     private void InitializeParameters()
     {
         currentEfficiency = 1f;
-        isPaused = false;
         serviceTime = baseServiceTime;
     }
     private void InitializeEvents()
@@ -123,13 +153,69 @@ public class ProductionFactory : MonoBehaviour
     {
         EventBusManager.Instance.OnResourceDeleted -= ResourceDeleted;
     }
+
+    public void LoadFromSaveData(ProductionManagerData.ProductionFactorySaveData data)
+    {
+        ClearFactoryState();
+        
+        foreach (var entry in data.storedResources)
+        {
+            ResourceType type = (ResourceType)Enum.Parse(typeof(ResourceType), entry.resourceName);
+            storedResources[type] = entry.amount;
+            resourcesInProduction[type] = entry.amount;
+        }
+
+        foreach (var entry in data.allocatedCells)
+        {
+            ResourceType type = (ResourceType)Enum.Parse(typeof(ResourceType), entry.resourceType);
+
+            var cells = new List<Vector3Int>();
+            foreach (var cell in entry.cells)
+            {
+                Vector3Int c = cell.ToVector3Int();
+                cells.Add(c);
+                TilemapManager.Instance.OccupyCell(c, this);
+            }
+            allocatedCells[type] = cells;
+        }
+
+        foreach (var cell in data.blockedCells)
+        {
+            
+            Vector3Int c = cell.ToVector3Int();
+            blockedCells.Add(c);
+        }
+        
+        currentProgress = data.currentProgress;
+        isPaused = data.isPaused;
+        serviceTime = data.serviceTime;
+
+    }
+    private void ClearFactoryState()
+    {
+        foreach (var kvp in allocatedCells)
+            foreach (var cell in kvp.Value)
+                TilemapManager.Instance.ReleaseCell(cell);
+
+        storedResources.Clear();
+        resourcesInProduction.Clear();
+        allocatedCells.Clear();
+        blockedCells.Clear();
+        currentProgress = 0f;
+    }
     
+    public Vector3Int GetCurrentCell()
+    {
+        Tilemap buildingTilemap = TilemapManager.Instance.GetTilemapOfType(TilemapType.Buildings);
+        return buildingTilemap.WorldToCell(transform.position);
+    }
+
     private void CheckForDuplicateConditions()
     {
         HashSet<ResourceType> conditionTypes = new();
         foreach (var condition in productionData.conditions)
         {
-            if (conditionTypes.Contains(condition.requiredResource.Type)) Debug.LogError($"В {productionData.factoryName} имеется дубликат условия!");
+            if (conditionTypes.Contains(condition.requiredResource.Type)) Debug.LogError($"В {buildingData.GetLocalizedName()} имеется дубликат условия!");
             else conditionTypes.Add(condition.requiredResource.Type);
         }
     }
@@ -320,7 +406,7 @@ public class ProductionFactory : MonoBehaviour
     public void SetPaused(bool pause)
     {
         isPaused = pause;
-        ProductionManager.Instance.ManagerFactory(this);
+        ProductionManager.Instance.RegisterFactory(this);
     }
     public void SetEditPaused(bool pause)
     {

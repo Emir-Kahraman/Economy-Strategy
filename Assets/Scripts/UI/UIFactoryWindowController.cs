@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using System;
 
 public enum ConditionStatus
 {
@@ -11,7 +12,7 @@ public enum ConditionStatus
 }
 public class ConditionUIData
 {
-    public Sprite icon;
+    public Sprite typeIcon;
     public string description;
     public ConditionStatus status;
 }
@@ -22,7 +23,7 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
     [SerializeField] private TextMeshProUGUI factoryNameText;
     [SerializeField] private Slider productionProgressSlider;
     [SerializeField] private TextMeshProUGUI statusText;
-    [SerializeField] private TextMeshProUGUI outputResourceText;
+    [SerializeField] private Image outputResourceIcon;
     [SerializeField] private Button switchStatusButton;
     [SerializeField] private Button closeButton;
 
@@ -32,6 +33,12 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
     [SerializeField] private Sprite storageConditionIcon;
     [SerializeField] private Sprite environmentConditionIcon;
     [SerializeField] private TextMeshProUGUI serviceCostText;
+
+    [Header("Localization")]
+    [SerializeField] private string category = "ui";
+    [SerializeField] private string keyOfPaused = "factory_paused";
+    [SerializeField] private string keyOfActive = "factory_active";
+    [SerializeField] private string keyOfInactive = "factory_inactive";
 
     [Header("Sub Controllers")]
     [SerializeField] private UIResourceAllocationEnvironmentSubController allocationEnvironmentController;
@@ -46,6 +53,21 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
         InitializeButtons();
         InitializeSubControllers();
         InitializeStartSettings();
+    }
+    public void Uninitialize()
+    {
+        UninitializeButtons();
+        UninitializeSubControllers();
+    }
+    private void UninitializeButtons()
+    {
+        switchStatusButton.onClick.RemoveAllListeners();
+        closeButton.onClick.RemoveAllListeners();
+    }
+    private void UninitializeSubControllers()
+    {
+        allocationEnvironmentController.Uninitialize();
+        allocationStorageController.Uninitialize();
     }
     private void InitializeButtons()
     {
@@ -70,8 +92,8 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
     }
     private void SetUIElements()
     {
-        factoryNameText.text = targetFactory.FactoryProductionData.factoryName;
-        outputResourceText.text = GetResourceName(targetFactory.FactoryProductionData.outputResource.Type);
+        factoryNameText.text = targetFactory.FactoryBuildingData.GetLocalizedName();
+        outputResourceIcon.sprite = targetFactory.FactoryProductionData.outputResource.Icon;
         serviceCostText.text = targetFactory.ServiceCost.ToString();
 
     }
@@ -110,10 +132,25 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
         if (targetFactory == null) return;
 
         productionProgressSlider.value = targetFactory.CurrentProgress;
-        statusText.text = targetFactory.IsPaused ? "Paused" : (targetFactory.IsOperational ? "Active" : "Inactive");
-        switchStatusButton.GetComponentInChildren<TextMeshProUGUI>().text = targetFactory.IsPaused ? "Paused" : "Active";//сложная операция
+        statusText.text = GetStatusText(targetFactory);
+        switchStatusButton.GetComponentInChildren<TextMeshProUGUI>().text = targetFactory.IsPaused ? "<Paused>" : "<Active>";
 
         UpdateConditionData();
+    }
+    private string GetStatusText(ProductionFactory factory)
+    {
+        if (factory.IsPaused)
+        {
+            return LocalizationManager.Instance.GetText(category, keyOfPaused);//"Paused";
+        }
+        else if (factory.IsOperational)
+        {
+            return LocalizationManager.Instance.GetText(category, keyOfActive);//"Active";
+        }
+        else
+        {
+            return LocalizationManager.Instance.GetText(category, keyOfInactive);//"Inactive";
+        }
     }
     private void UpdateConditionData()
     {
@@ -133,7 +170,7 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
         switch (condition.conditionType)
         {
             case ProductionFactory.ProductionCondition.ConditionType.StorageResource:
-                data.icon = storageConditionIcon;
+                data.typeIcon = storageConditionIcon;
 
                 int currentAmount = targetFactory.GetAmountResourceInProduction(condition.requiredResource.Type);
                 data.description = $"{condition.requiredResource}: {currentAmount}/ {condition.requiredAmount}";
@@ -144,7 +181,7 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
                 break;
 
             case ProductionFactory.ProductionCondition.ConditionType.EnvironmentTile:
-                data.icon = environmentConditionIcon;
+                data.typeIcon = environmentConditionIcon;
 
                 int actualAmount = targetFactory.GetAmountResourceInProduction(condition.requiredResource.Type);
                 
@@ -169,9 +206,9 @@ public class UIFactoryWindowController : MonoBehaviour, IUIWindow
         {
             case ResourceType.Test: return "Test";
             case ResourceType.Forest: return "Forest";
-            case ResourceType.Stone_Ore: return "Stone Ore";
+            case ResourceType.Stone: return "Stone Ore";
             case ResourceType.Wood: return "Wood";
-            case ResourceType.Stone: return "Stone";
+            case ResourceType.Cobblestone: return "Stone";
             default: return type.ToString();
         }
     }

@@ -13,10 +13,10 @@ MonoBehaviour:
   m_Name: Wood
   m_EditorClassIdentifier: 
   Period: 1
-  Type: 4
+  Type: 12
   CanBeOrdered: 1
   Tile: {fileID: 0}
-  Name: Wood
+  Key: Wood
   Icon: {fileID: -2579957754792524931, guid: 845f54fe6402b96478afde7c18b10f7d, type: 3}
   VolumePerUnit: 4
   Price: 20

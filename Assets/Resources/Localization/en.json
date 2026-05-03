@@ -1,0 +1,53 @@
+{
+  "ui": {
+    "MainMenu_Play": "Play",
+    "MainMenu_Continue": "Continue",
+    "MainMenu_Campaign": "Campaign",
+    "MainMenu_Generate": "Generate",
+    "MainMenu_Back": "Back",
+    "CampaignMenu_Easy": "Easy",
+    "CampaignMenu_Medium": "Medium",
+    "CampaignMenu_Hard": "Hard",
+    "CampaignMenu_Expert": "Expert",
+    "GenerateMenu_Play": "Create",
+    "GenerateMenu_WorldSizeParameters": "World Size",
+    "GenerateMenu_StartMoneyParameters": "Start Capital",
+    "GenerateMenu_StartPeriodParameters": "Start Period",
+    "GenerateMenu_WorldSize_Small": "Small",
+    "GenerateMenu_WorldSize_Medium": "Medium",
+    "GenerateMenu_WorldSize_Large": "Large",
+    "GenerateMenu_StartMoney_Low": "Low",
+    "GenerateMenu_StartMoney_Medium": "Medium",
+    "GenerateMenu_StartMoney_High": "High",
+    "LevelMenu_Panels_Bankruptcy": "Bankruptcy!",
+    "LevelMenu_Panels_GameOver": "Game Over",
+    "FactoryMenu_FactoryStatus_Pause": "Pause",
+    "FactoryMenu_FactoryStatus_Active": "Active",
+    "FactoryMenu_FactoryStatus_Inactive": "Inactive",
+    "PauseMenu_Resume": "Resume",
+    "PauseMenu_Restart": "Restart",
+    "PauseMenu_MainMenu": "Main Menu"
+  },
+  "quests": {
+    "Quest_Money": "Collect: {0} coins",
+    "Quest_GatherResource": "Gather: {0} {1}",
+    "Quest_ProduceResource": "Produce: {0} {1}",
+    "Quest_Building": "Build: {0} {1}",
+    "Quest_Period": "Reach period: {0}"
+  },
+  "buildings": {
+    "Forest": "Forest",
+    "LumberCamp": "Lumber Camp",
+    "Quarry": "Quarry",
+    "SmallStorage": "Small Storage",
+    "TestBuilding": "Test Building"
+  },
+  "resources": {
+    "Copper": "Copper",
+    "Forest": "Forest",
+    "Stone": "Stone",
+    "StoneOre": "Stone Ore",
+    "Test": "Test Resource",
+    "Wood": "Wood"
+  }
+}

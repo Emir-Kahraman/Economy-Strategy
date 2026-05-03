@@ -4,17 +4,15 @@ using UnityEngine.UI;
 
 public class UISceneLoadButton : MonoBehaviour
 {
-    private void Awake()
+    UIWorldGenerateMenuController parentController;
+    public void Initialize(UIWorldGenerateMenuController parent)
     {
-        Initialize();
-    }
-    private void Initialize()
-    {
+        parentController = parent;
         gameObject.GetComponent<Button>().onClick.AddListener(OnClick);
     }
 
     private void OnClick()
     {
-        EventBusManager.Instance.SceneLoadRequest("Level Test");
+        parentController.StartGame();
     }
 }
